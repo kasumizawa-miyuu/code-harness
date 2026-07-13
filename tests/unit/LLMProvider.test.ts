@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { createMockLLMProvider } from '../../src/MockLLMProvider.js'
-import { createAction } from '../../src/types.js'
 
 describe('MockLLMProvider', () => {
   it('should return responses in sequence', async () => {
