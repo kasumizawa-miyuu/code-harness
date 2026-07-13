@@ -1,0 +1,22 @@
+{
+  "name": "@student/code-harness",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "demo:guardrail": "npx tsx tests/demo/guardrail-demo.ts",
+    "demo:feedback-loop": "npx tsx tests/demo/feedback-loop-demo.ts",
+    "demo:adaptive-retry": "npx tsx tests/demo/adaptive-retry-demo.ts"
+  },
+  "dependencies": {
+    "keytar": "^7.9.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0",
+    "tsx": "^4.16.0",
+    "@types/node": "^20.0.0"
+  }
+}
