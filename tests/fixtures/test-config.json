@@ -1,0 +1,5 @@
+{
+  "llmProvider": "openai",
+  "model": "gpt-4o",
+  "verbose": true
+}
