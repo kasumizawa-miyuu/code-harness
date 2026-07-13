@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createAgentLoop } from '../../src/AgentLoop.js'
+import { existsSync, unlinkSync } from 'node:fs'
 
 describe('AgentLoop', () => {
   let loop: ReturnType<typeof createAgentLoop>
@@ -22,9 +23,8 @@ describe('AgentLoop', () => {
 
   afterEach(() => {
     try {
-      const fs = require('node:fs')
-      if (fs.existsSync('.harness-test-memory.json')) {
-        fs.unlinkSync('.harness-test-memory.json')
+      if (existsSync('.harness-test-memory.json')) {
+        unlinkSync('.harness-test-memory.json')
       }
     } catch { /* noop */ }
   })

@@ -90,6 +90,9 @@ export function createAgentLoop(config: Config) {
             context,
           )
           context = feedback
+          if (context.retryCount >= config.maxRetries) {
+            return { success: false, retries: context.retryCount, status: 'failed_after_retries', exchanges: context.history }
+          }
           continue
         }
 
