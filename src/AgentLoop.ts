@@ -1,4 +1,4 @@
-import { AgentLoopResult, Context, Action, VerificationResult, Config } from './types.js'
+import { AgentLoopResult, Context, Action, VerificationResult, Config, ILLMProvider } from './types.js'
 import { createActionParser } from './ActionParser.js'
 import { createToolExecutor } from './ToolExecutor.js'
 import { createGuardrail } from './Guardrail.js'
@@ -20,7 +20,7 @@ function summariesEqual(a: string, b: string): boolean {
   return a.trim() === b.trim()
 }
 
-export function createAgentLoop(config: Config) {
+export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
   const logger = createLogger(config.verbose)
   const parser = createActionParser()
   const executor = createToolExecutor(config)
@@ -28,11 +28,13 @@ export function createAgentLoop(config: Config) {
   const verifier = createVerifier()
   const injector = createFeedbackInjector()
 
-  const llmProvider = createMockLLMProvider()
+  const provider = llmProvider ?? createMockLLMProvider()
 
   return {
     setMockResponses(responses: string[]) {
-      llmProvider.setResponses(responses)
+      if ('setResponses' in provider) {
+        ;(provider as any).setResponses(responses)
+      }
     },
 
     async run(task: string): Promise<AgentLoopResult> {
@@ -53,7 +55,7 @@ export function createAgentLoop(config: Config) {
 
         let response
         try {
-          response = await llmProvider.call(context)
+          response = await provider.call(context)
         } catch (err: any) {
           logger.error(`LLM error: ${err.message}`)
           return { success: false, retries: context.retryCount, status: 'llm_error', exchanges: context.history }

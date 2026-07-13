@@ -1,13 +1,14 @@
 import { createKeyManager } from './KeyManager.js'
 import { loadConfig } from './Config.js'
 import { createAgentLoop } from './AgentLoop.js'
+import { createLLMProvider } from './LLMProvider.js'
 import { createLogger } from './Logger.js'
-import { createReadlineInterface, question } from 'node:readline/promises'
+import { createInterface } from 'node:readline/promises'
 import { stdin as input, stdout as output } from 'node:process'
 
 async function promptHidden(query: string): Promise<string> {
-  const rl = createReadlineInterface({ input, output })
-  const answer = await question(rl, query)
+  const rl = createInterface({ input, output })
+  const answer = await rl.question(query)
   rl.close()
   return answer
 }
@@ -60,7 +61,7 @@ export async function main(args: string[] = process.argv.slice(2)) {
     }
     config.apiKey = key
 
-    const loop = createAgentLoop(config)
+    const loop = createAgentLoop(config, await createLLMProvider(config))
     const result = await loop.run(task)
     console.log(`Status: ${result.status}`)
     console.log(`Retries: ${result.retries}`)
@@ -73,8 +74,7 @@ Usage:
   harness run "<task>"     Run a coding task
   harness key status       Check API key status
   harness key update       Set/update API key
-  harness key clear        Remove API key
-  harness configure        Interactive setup`)
+  harness key clear        Remove API key`)
 }
 
 const isMain = process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js')

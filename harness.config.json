@@ -1,0 +1,12 @@
+{
+  "llmProvider": "mock",
+  "model": "gpt-4o",
+  "maxRetries": 3,
+  "workDir": ".",
+  "dangerousCommands": ["rm -rf /", "rm -rf /*", "rm -rf ~", "dd if="],
+  "allowedPaths": ["."],
+  "toolTimeout": 30000,
+  "llmTimeout": 60000,
+  "memoryFile": ".harness-memory.json",
+  "verbose": false
+}
