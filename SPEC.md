@@ -347,7 +347,7 @@ Config {
 **npm 包（主分发形态）：**
 
 ```
-npm install -g @student/coding-harness
+npm install -g @student/code-harness
 harness run "为所有函数添加错误处理"
 ```
 
@@ -355,13 +355,13 @@ harness run "为所有函数添加错误处理"
 
 ```dockerfile
 FROM node:20-slim
-RUN npm install -g @student/coding-harness
+RUN npm install -g @student/code-harness
 ENTRYPOINT ["harness"]
 ```
 
 ```
-docker build -t coding-harness .
-docker run -v $(pwd):/workspace -w /workspace coding-harness run "修复测试"
+docker build -t code-harness .
+docker run -v $(pwd):/workspace -w /workspace code-harness run "修复测试"
 ```
 
 **CI 配置：**
@@ -512,6 +512,6 @@ code-harness/
 ├── docs/
 │   └── superpowers/
 │       └── specs/
-│           └── 2026-07-13-coding-harness-design.md
+│           └── 2026-07-13-code-harness-design.md
 └── README.md
 ```
