@@ -1,6 +1,6 @@
 # Code-Harness Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build a lightweight Coding Agent Harness with a feedback-loop-driven main loop, supporting 5 tools (read/write/patch/run/run_test), guardrail-based governance, structured feedback verification, and adaptive retry.
 
@@ -90,7 +90,7 @@ code-harness/
 **Interfaces:**
 - Produces: all type definitions — `Context`, `Exchange`, `Action`, `ActionType`, `ActionResult`, `VerificationResult`, `VerificationCategory`, `Severity`, `Config`, `GuardResult`, `LLMResponse`, `LLMProvider`, `ActionParser`, `ToolExecutor`, `Guardrail`, `Verifier`, `FeedbackInjector`, `Memory`, `Logger`
 
-- [ ] **Step 1: Create package.json**
+- [x] **Step 1: Create package.json**
 
 ```json
 {
@@ -117,7 +117,7 @@ code-harness/
 }
 ```
 
-- [ ] **Step 2: Create tsconfig.json**
+- [x] **Step 2: Create tsconfig.json**
 
 ```json
 {
@@ -136,7 +136,7 @@ code-harness/
 }
 ```
 
-- [ ] **Step 3: Create vitest.config.ts**
+- [x] **Step 3: Create vitest.config.ts**
 
 ```typescript
 import { defineConfig } from 'vitest/config'
@@ -148,7 +148,7 @@ export default defineConfig({
 })
 ```
 
-- [ ] **Step 4: Create .gitignore**
+- [x] **Step 4: Create .gitignore**
 
 ```
 node_modules/
@@ -157,7 +157,7 @@ dist/
 *.memory.json
 ```
 
-- [ ] **Step 5: Create src/types.ts**
+- [x] **Step 5: Create src/types.ts**
 
 ```typescript
 // ===== Action Types =====
@@ -278,12 +278,12 @@ export interface AgentLoopResult {
 }
 ```
 
-- [ ] **Step 6: Verify project compiles**
+- [x] **Step 6: Verify project compiles**
 
 Run: `cd code-harness && npm install && npx tsc --noEmit`
 Expected: No errors, types compile cleanly.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```
 git add package.json tsconfig.json vitest.config.ts .gitignore src/types.ts
@@ -302,7 +302,7 @@ git commit -m "chore: scaffold project with types (subagent: primary)"
 - Consumes: `Config` from `types.ts`
 - Produces: `loadConfig(path?: string): Promise<Config>` — loads JSON config + env overrides, returns default values for missing fields
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/Config.test.ts
@@ -337,12 +337,12 @@ describe('Config', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/Config.test.ts -v`
 Expected: FAIL — "Cannot find module '../../src/Config.js'"
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/Config.ts
@@ -404,7 +404,7 @@ export async function loadConfig(path?: string): Promise<Config> {
 }
 ```
 
-- [ ] **Step 4: Create test fixture**
+- [x] **Step 4: Create test fixture**
 
 Create `tests/fixtures/test-config.json`:
 ```json
@@ -415,12 +415,12 @@ Create `tests/fixtures/test-config.json`:
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/Config.test.ts -v`
 Expected: PASS — all 3 tests pass
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```
 git add src/Config.ts tests/unit/Config.test.ts tests/fixtures/test-config.json
@@ -439,7 +439,7 @@ git commit -m "feat: add Config module with JSON file + env override (subagent: 
 - Consumes: nothing beyond types
 - Produces: `createLogger(verbose?: boolean): ILogger` — logger that prefixes messages with level and timestamp; when verbose=false, debug messages are suppressed
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/Logger.test.ts
@@ -473,12 +473,12 @@ describe('Logger', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/Logger.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/Logger.ts
@@ -499,12 +499,12 @@ export function createLogger(verbose: boolean): ILogger {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/Logger.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/Logger.ts tests/unit/Logger.test.ts
@@ -525,7 +525,7 @@ git commit -m "feat: add Logger module with level prefix and verbose gate (subag
 - Produces: `createLLMProvider(config: Config): ILLMProvider` — returns OpenAI provider or mock based on config.llmProvider
 - Produces: `createMockLLMProvider(responses: string[]): ILLMProvider & { setResponses(r: string[]): void }` — returns predefined responses in sequence
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/LLMProvider.test.ts
@@ -557,12 +557,12 @@ describe('MockLLMProvider', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/LLMProvider.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/MockLLMProvider.ts
@@ -634,12 +634,12 @@ export function createLLMProvider(config: Config): ILLMProvider {
 
 Note: `createLLMProvider` is async (uses dynamic import). Update test accordingly.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/LLMProvider.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/LLMProvider.ts src/MockLLMProvider.ts tests/unit/LLMProvider.test.ts
@@ -658,7 +658,7 @@ git commit -m "feat: add LLMProvider and MockLLMProvider (subagent: primary)"
 - Consumes: `Action`, `ActionType`, `IActionParser` from types
 - Produces: `createActionParser(): IActionParser` — regex-based parser that extracts actions from LLM text
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/ActionParser.test.ts
@@ -709,12 +709,12 @@ describe('ActionParser', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/ActionParser.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/ActionParser.ts
@@ -754,12 +754,12 @@ export function createActionParser(): IActionParser {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/ActionParser.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/ActionParser.ts tests/unit/ActionParser.test.ts
@@ -778,7 +778,7 @@ git commit -m "feat: add ActionParser with regex-based extraction (subagent: pri
 - Consumes: `Action`, `ActionResult`, `IToolExecutor` from types
 - Produces: `createToolExecutor(config: Config): IToolExecutor` — executes actions via fs and child_process with timeout
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/ToolExecutor.test.ts
@@ -830,12 +830,12 @@ describe('ToolExecutor', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/ToolExecutor.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/ToolExecutor.ts
@@ -889,12 +889,12 @@ export function createToolExecutor(config: { toolTimeout: number }): IToolExecut
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/ToolExecutor.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/ToolExecutor.ts tests/unit/ToolExecutor.test.ts
@@ -913,7 +913,7 @@ git commit -m "feat: add ToolExecutor with file operations and shell execution (
 - Consumes: `Action`, `GuardResult`, `IGuardrail` from types
 - Produces: `createGuardrail(config: Config): IGuardrail` — checks blacklist commands and path whitelist
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/Guardrail.test.ts
@@ -951,12 +951,12 @@ describe('Guardrail', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/Guardrail.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/Guardrail.ts
@@ -988,12 +988,12 @@ export function createGuardrail(config: { dangerousCommands: string[]; allowedPa
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/Guardrail.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/Guardrail.ts tests/unit/Guardrail.test.ts
@@ -1012,7 +1012,7 @@ git commit -m "feat: add Guardrail with command blacklist and path whitelist (su
 - Consumes: `ActionResult`, `VerificationResult`, `IVerifier` from types
 - Produces: `createVerifier(): IVerifier` — classifies action results into 5 categories with severity
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/Verifier.test.ts
@@ -1066,12 +1066,12 @@ describe('Verifier', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/Verifier.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/Verifier.ts
@@ -1125,12 +1125,12 @@ export function createVerifier(): IVerifier {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/Verifier.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/Verifier.ts tests/unit/Verifier.test.ts
@@ -1149,7 +1149,7 @@ git commit -m "feat: add Verifier with 5-category classification and severity (s
 - Consumes: `VerificationResult`, `Context`, `IFeedbackInjector` from types
 - Produces: `createFeedbackInjector(): IFeedbackInjector` — appends structured feedback to context
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/FeedbackInjector.test.ts
@@ -1183,12 +1183,12 @@ describe('FeedbackInjector', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/FeedbackInjector.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/FeedbackInjector.ts
@@ -1211,12 +1211,12 @@ export function createFeedbackInjector(): IFeedbackInjector {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/FeedbackInjector.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/FeedbackInjector.ts tests/unit/FeedbackInjector.test.ts
@@ -1235,7 +1235,7 @@ git commit -m "feat: add FeedbackInjector with retry count and context update (s
 - Consumes: `IMemory` from types
 - Produces: `createMemory(filePath: string): IMemory` — KV store with sliding window (20 items max), JSON file persistence
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/Memory.test.ts
@@ -1290,12 +1290,12 @@ describe('Memory', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/Memory.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/Memory.ts
@@ -1348,12 +1348,12 @@ export function createMemory(filePath: string): IMemory {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/Memory.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/Memory.ts tests/unit/Memory.test.ts
@@ -1372,7 +1372,7 @@ git commit -m "feat: add Memory module with KV store, sliding window, and JSON p
 - Consumes: all component interfaces from types + all factory functions
 - Produces: `createAgentLoop(config: Config): { run(task: string): Promise<AgentLoopResult> }` — orchestrates the full loop
 
-- [ ] **Step 1: Write the failing integration test**
+- [x] **Step 1: Write the failing integration test**
 
 ```typescript
 // tests/integration/AgentLoop.test.ts
@@ -1424,12 +1424,12 @@ describe('AgentLoop', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/integration/AgentLoop.test.ts -v`
 Expected: FAIL — "Cannot find module '../../src/AgentLoop.js'"
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/AgentLoop.ts
@@ -1581,7 +1581,7 @@ export function createAgentLoop(config: Config) {
 }
 ```
 
-- [ ] **Step 4: Write a test helper — create a working test with mock LLM**
+- [x] **Step 4: Write a test helper — create a working test with mock LLM**
 
 Update `tests/integration/AgentLoop.test.ts` with proper mock setup:
 
@@ -1636,12 +1636,12 @@ describe('AgentLoop', () => {
 })
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npx vitest run tests/integration/AgentLoop.test.ts -v`
 Expected: PASS — all 3 integration tests pass
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```
 git add src/AgentLoop.ts tests/integration/AgentLoop.test.ts
@@ -1660,7 +1660,7 @@ git commit -m "feat: add AgentLoop with adaptive retry and full integration (sub
 - Consumes: nothing beyond types
 - Produces: `createKeyManager(): { getKey(): Promise<string | null>, setKey(key: string): Promise<void>, clearKey(): Promise<void>, hasKey(): Promise<boolean> }` — wraps keytar for secure credential storage, with `.env` fallback
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/KeyManager.test.ts
@@ -1684,12 +1684,12 @@ describe('KeyManager', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/KeyManager.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/KeyManager.ts
@@ -1739,12 +1739,12 @@ export function createKeyManager() {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/KeyManager.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/KeyManager.ts tests/unit/KeyManager.test.ts
@@ -1763,7 +1763,7 @@ git commit -m "feat: add KeyManager with keytar and env var fallback (subagent: 
 - Consumes: everything
 - Produces: CLI binary with commands: `run`, `key status`, `key update`, `key clear`, `configure`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/integration/CLI.test.ts
@@ -1778,12 +1778,12 @@ describe('CLI', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/integration/CLI.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/index.ts
@@ -1875,12 +1875,12 @@ if (isMain) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/integration/CLI.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/index.ts tests/integration/CLI.test.ts
@@ -1894,7 +1894,7 @@ git commit -m "feat: add CLI entry with run, key, and configure commands (subage
 **Files:**
 - Create: `tests/integration/AdaptiveRetry.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/integration/AdaptiveRetry.test.ts
@@ -1953,19 +1953,19 @@ describe('AdaptiveRetry', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/integration/AdaptiveRetry.test.ts -v`
 Expected: FAIL
 
-- [ ] **Step 3: The implementation already exists in AgentLoop.ts — verify tests pass**
+- [x] **Step 3: The implementation already exists in AgentLoop.ts — verify tests pass**
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/integration/AdaptiveRetry.test.ts -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add tests/integration/AdaptiveRetry.test.ts
@@ -1981,7 +1981,7 @@ git commit -m "test: add adaptive retry integration tests (subagent: primary)"
 - Create: `tests/demo/feedback-loop-demo.ts`
 - Create: `tests/demo/adaptive-retry-demo.ts`
 
-- [ ] **Step 1: Create guardrail-demo.ts**
+- [x] **Step 1: Create guardrail-demo.ts**
 
 ```typescript
 // tests/demo/guardrail-demo.ts
@@ -2015,7 +2015,7 @@ async function main() {
 main().catch(console.error)
 ```
 
-- [ ] **Step 2: Create feedback-loop-demo.ts**
+- [x] **Step 2: Create feedback-loop-demo.ts**
 
 ```typescript
 // tests/demo/feedback-loop-demo.ts
@@ -2054,7 +2054,7 @@ async function main() {
 main().catch(console.error)
 ```
 
-- [ ] **Step 3: Create adaptive-retry-demo.ts**
+- [x] **Step 3: Create adaptive-retry-demo.ts**
 
 ```typescript
 // tests/demo/adaptive-retry-demo.ts
@@ -2094,7 +2094,7 @@ async function main() {
 main().catch(console.error)
 ```
 
-- [ ] **Step 4: Verify demos run**
+- [x] **Step 4: Verify demos run**
 
 Run: `npx tsx tests/demo/guardrail-demo.ts`
 Expected: Shows guardrail blocking dangerous command, allowing safe command
@@ -2105,7 +2105,7 @@ Expected: Shows agent failing then succeeding after feedback
 Run: `npx tsx tests/demo/adaptive-retry-demo.ts`
 Expected: Shows agent stopping early due to repeated error detection
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add tests/demo/guardrail-demo.ts tests/demo/feedback-loop-demo.ts tests/demo/adaptive-retry-demo.ts
@@ -2120,7 +2120,7 @@ git commit -m "feat: add 3 mechanism demos for guardrail, feedback loop, and ada
 - Create: `Dockerfile`
 - Create: `.github/workflows/ci.yml`
 
-- [ ] **Step 1: Create Dockerfile**
+- [x] **Step 1: Create Dockerfile**
 
 ```dockerfile
 FROM node:20-slim AS builder
@@ -2138,7 +2138,7 @@ COPY package.json ./
 ENTRYPOINT ["node", "dist/index.js"]
 ```
 
-- [ ] **Step 2: Create .github/workflows/ci.yml**
+- [x] **Step 2: Create .github/workflows/ci.yml**
 
 ```yaml
 name: CI
@@ -2165,7 +2165,7 @@ jobs:
       - run: docker build -t code-harness .
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```
 git add Dockerfile .github/workflows/ci.yml
@@ -2180,7 +2180,7 @@ git commit -m "ci: add Dockerfile and GitHub Actions CI with unit-test job (suba
 - Create: `README.md`
 - Modify: `SPEC.md` (update project name from coding-harness to code-harness)
 
-- [ ] **Step 1: Write README.md**
+- [x] **Step 1: Write README.md**
 
 ```markdown
 # code-harness
@@ -2287,9 +2287,9 @@ code-harness/
 MIT
 ```
 
-- [ ] **Step 2: Update SPEC.md — replace "coding-harness" with "code-harness"**
+- [x] **Step 2: Update SPEC.md — replace "coding-harness" with "code-harness"**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```
 git add README.md SPEC.md
