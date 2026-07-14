@@ -5,6 +5,7 @@ describe('Config', () => {
   it('should return default values when no config file exists', async () => {
     const config = await loadConfig('/nonexistent/path.json')
     expect(config.llmProvider).toBe('mock')
+    expect(config.baseUrl).toBe('https://api.openai.com/v1')
     expect(config.maxRetries).toBe(3)
     expect(config.workDir).toBe(process.cwd())
     expect(config.toolTimeout).toBe(30000)

@@ -5,6 +5,8 @@ import { createLLMProvider } from './LLMProvider.js'
 import { createLogger } from './Logger.js'
 import { createInterface } from 'node:readline/promises'
 import { stdin as input, stdout as output } from 'node:process'
+import { writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 
 async function promptHidden(query: string): Promise<string> {
   const rl = createInterface({ input, output })
@@ -13,8 +15,38 @@ async function promptHidden(query: string): Promise<string> {
   return answer
 }
 
+async function prompt(query: string, defaultValue?: string): Promise<string> {
+  const rl = createInterface({ input, output })
+  const defaultStr = defaultValue ? ` (${defaultValue})` : ''
+  const answer = await rl.question(`${query}${defaultStr}: `)
+  rl.close()
+  return answer || defaultValue || ''
+}
+
 export async function main(args: string[] = process.argv.slice(2)) {
   const [command, ...rest] = args
+
+  if (command === 'configure') {
+    const configPath = join(process.cwd(), 'harness.config.json')
+    const existing = await loadConfig(configPath)
+
+    const llmProvider = await prompt('LLM provider', existing.llmProvider)
+    const baseUrl = await prompt('API base URL', existing.baseUrl)
+    const model = await prompt('Model name', existing.model)
+    const maxRetries = await prompt('Max retries', String(existing.maxRetries))
+
+    const newConfig = {
+      ...existing,
+      llmProvider: llmProvider || existing.llmProvider,
+      baseUrl: baseUrl || existing.baseUrl,
+      model: model || existing.model,
+      maxRetries: parseInt(maxRetries) || existing.maxRetries,
+    }
+
+    await writeFile(configPath, JSON.stringify(newConfig, null, 2), 'utf-8')
+    console.log('Configuration saved to harness.config.json')
+    return
+  }
 
   if (command === 'key') {
     const sub = rest[0]
@@ -71,10 +103,11 @@ export async function main(args: string[] = process.argv.slice(2)) {
   console.log(`code-harness — Coding Agent Harness
 
 Usage:
-  harness run "<task>"     Run a coding task
-  harness key status       Check API key status
-  harness key update       Set/update API key
-  harness key clear        Remove API key`)
+  harness configure         Interactive setup
+  harness run "<task>"      Run a coding task
+  harness key status        Check API key status
+  harness key update        Set/update API key
+  harness key clear         Remove API key`)
 }
 
 const isMain = process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js') || process.argv[1]?.endsWith('harness')

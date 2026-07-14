@@ -8,6 +8,7 @@ describe('AdaptiveRetry', () => {
     loop = createAgentLoop({
       llmProvider: 'mock',
       apiKey: '',
+      baseUrl: 'https://api.openai.com/v1',
       model: 'gpt-4o',
       maxRetries: 5,
       workDir: process.cwd(),

@@ -59,6 +59,7 @@ export interface LLMResponse {
 export interface Config {
   llmProvider: 'openai' | 'anthropic' | 'mock'
   apiKey: string
+  baseUrl: string
   model: string
   maxRetries: number
   workDir: string

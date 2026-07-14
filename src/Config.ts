@@ -4,6 +4,7 @@ import { Config } from './types.js'
 const DEFAULT_CONFIG: Config = {
   llmProvider: 'mock',
   apiKey: '',
+  baseUrl: 'https://api.openai.com/v1',
   model: 'gpt-4o',
   maxRetries: 3,
   workDir: process.cwd(),
@@ -18,6 +19,7 @@ const DEFAULT_CONFIG: Config = {
 const ENV_MAP: Record<string, keyof Config> = {
   HARNESS_LLM_PROVIDER: 'llmProvider',
   HARNESS_API_KEY: 'apiKey',
+  HARNESS_BASE_URL: 'baseUrl',
   HARNESS_MODEL: 'model',
   HARNESS_MAX_RETRIES: 'maxRetries',
   HARNESS_WORK_DIR: 'workDir',

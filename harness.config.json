@@ -1,6 +1,7 @@
 {
-  "llmProvider": "mock",
-  "model": "gpt-4o",
+  "llmProvider": "openai",
+  "baseUrl": "https://api.openai.com/v1",
+  "model": "deepseek-v4-flash",
   "maxRetries": 3,
   "workDir": ".",
   "dangerousCommands": ["rm -rf /", "rm -rf /*", "rm -rf ~", "dd if="],

@@ -9,6 +9,7 @@ describe('AgentLoop', () => {
     loop = createAgentLoop({
       llmProvider: 'mock',
       apiKey: '',
+      baseUrl: 'https://api.openai.com/v1',
       model: 'gpt-4o',
       maxRetries: 3,
       workDir: process.cwd(),

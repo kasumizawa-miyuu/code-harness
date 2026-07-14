@@ -17,7 +17,7 @@ export async function createLLMProvider(config: Config): Promise<ILLMProvider> {
         messages.push({ role: 'user', content: `[Feedback] ${context.lastFeedback.summary}` })
       }
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch(`${config.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
