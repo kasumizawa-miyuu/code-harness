@@ -82,6 +82,45 @@ AI 将 3 个 user story 扩充到 5 个，覆盖了：
 
 ## 冷启动验证
 
-**按照课程要求，此处应使用与主开发 agent 不同类型的第二个 agent，在全新 session 中仅凭 SPEC.md + PLAN.md 实现 1-2 个 task。**
+### 验证信息
 
-**当前状态：** 待完成。需要使用 Claude Code 或 Codex CLI 在全新终端中执行。
+| 项目 | 内容 |
+|------|------|
+| 主开发 agent | OpenCode（当前 session） |
+| 冷启动 agent | Claude Code v2.1.207 |
+| 冷启动模型 | deepseek-v4-flash（与主开发相同） |
+| 选择的任务 | Task 1（项目脚手架 + types.ts）+ Task 5（ActionParser） |
+| 验证日期 | 2026-07-13 |
+| 产出目录 | `cold-start-test/code-harness/` |
+
+### 验证过程
+
+1. 在全新终端中启动 Claude Code，进入 `cold-start-test/` 目录
+2. 仅提供 `SPEC.md` 和 `PLAN.md` 两个文件
+3. 指令："请阅读 SPEC.md 和 PLAN.md，从 PLAN.md 中选择 1-2 个 task 独立实现。遇到不确定之处请暂停询问我。"
+4. Claude Code 自主选择了 Task 1 和 Task 5，完成后报告成功
+
+### 产出分析
+
+**Task 1 产出物：**
+- `package.json` — 与 PLAN.md 完全一致，无偏差
+- `tsconfig.json` — 与 PLAN.md 完全一致，无偏差
+- `vitest.config.ts` — 与 PLAN.md 完全一致，无偏差
+- `.gitignore` — 与 PLAN.md 完全一致，无偏差
+- `src/types.ts` — 116 行，定义了全部 13 个核心接口，与 SPEC §6 数据模型完全一致
+
+**Task 5 产出物：**
+- `src/ActionParser.ts` — 34 行，实现 5 种动作的正则解析，与 SPEC §3.3 完全一致
+- `tests/unit/ActionParser.test.ts` — 6 个测试用例，覆盖全部动作类型和边界条件
+
+### 偏差分析
+
+**未发现偏差。** Claude Code 的实现与 SPEC 和 PLAN.md 完全一致，未做任何额外假设或偏离。
+
+### 对 SPEC 质量的反馈
+
+冷启动 agent 在整个过程中没有遇到不确定之处，没有暂停询问。这说明 SPEC.md 和 PLAN.md 的清晰度足够高——一个没有任何项目背景知识的 agent 可以仅凭文档独立完成任务。
+
+### 与主开发实现的对比
+
+主开发（OpenCode）和冷启动（Claude Code）在 Task 1 和 Task 5 上的产出物内容完全一致，代码风格和接口定义无差异。这验证了 SPEC 和 PLAN.md 的明确性——两个不同的 agent 读同一份文档，产出了相同的代码。
