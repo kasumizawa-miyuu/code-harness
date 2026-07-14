@@ -77,7 +77,7 @@ Usage:
   harness key clear        Remove API key`)
 }
 
-const isMain = process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js')
+const isMain = process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js') || process.argv[1]?.endsWith('harness')
 if (isMain) {
   main().catch(console.error)
 }

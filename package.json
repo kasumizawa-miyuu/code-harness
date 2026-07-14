@@ -2,6 +2,9 @@
   "name": "@student/code-harness",
   "version": "0.1.0",
   "type": "module",
+  "bin": {
+    "harness": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
