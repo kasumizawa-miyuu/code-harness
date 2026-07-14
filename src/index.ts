@@ -97,6 +97,9 @@ export async function main(args: string[] = process.argv.slice(2)) {
     const result = await loop.run(task)
     console.log(`Status: ${result.status}`)
     console.log(`Retries: ${result.retries}`)
+    if (result.lastResult) {
+      console.log(`\nResult:\n${result.lastResult.stdout || result.lastResult.stderr}`)
+    }
     return
   }
 

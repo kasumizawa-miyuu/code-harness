@@ -1,4 +1,4 @@
-import { AgentLoopResult, Context, Action, VerificationResult, Config, ILLMProvider } from './types.js'
+import { AgentLoopResult, Context, Action, VerificationResult, Config, ILLMProvider, ActionResult } from './types.js'
 import { createActionParser } from './ActionParser.js'
 import { createToolExecutor } from './ToolExecutor.js'
 import { createGuardrail } from './Guardrail.js'
@@ -49,6 +49,7 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
       let lastSummary: string | null = null
       let sameCategoryCount = 0
       let lastCategory: string | null = null
+      let lastResult: ActionResult | null = null
 
       while (true) {
         logger.info('Thinking...')
@@ -99,6 +100,7 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
         }
 
         const actionResult = await executor.execute(action)
+        lastResult = actionResult
         logger.info(`Result: exitCode=${actionResult.exitCode}`)
 
         const verification = await verifier.verify(actionResult)
@@ -132,10 +134,10 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
         }
 
         logger.info('Task completed successfully')
-        return { success: true, retries: context.retryCount, status: 'completed', exchanges: context.history }
+        return { success: true, retries: context.retryCount, status: 'completed', exchanges: context.history, lastResult: lastResult || undefined }
       }
 
-      return { success: true, retries: context.retryCount, status: 'completed', exchanges: context.history }
+      return { success: true, retries: context.retryCount, status: 'completed', exchanges: context.history, lastResult: lastResult || undefined }
     },
   }
 }
