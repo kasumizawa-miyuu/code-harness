@@ -19,7 +19,9 @@ harness run "fix the failing test"
 
 | Command | Description |
 |---------|-------------|
+| `harness configure` | Interactive setup (LLM provider, base URL, model) |
 | `harness run "<task>"` | Run a coding task with the agent |
+| `harness serve` | Start WebUI server (http://localhost:3000) |
 | `harness key status` | Check if API key is configured |
 | `harness key update` | Set or update API key (hidden input) |
 | `harness key clear` | Remove stored API key |
@@ -84,12 +86,35 @@ code-harness/
 │   ├── unit/
 │   ├── integration/
 │   └── demo/
+├── public/        # WebUI static files
 ├── docs/          # Design docs and plans
 ├── SPEC.md
 ├── PLAN.md
 ├── README.md
-└── Dockerfile
+├── Dockerfile
+└── render.yaml
 ```
+
+## WebUI
+
+Start the web interface:
+
+```bash
+harness serve
+```
+
+Open http://localhost:3000 in your browser.
+
+### Deploy to Render
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+
+1. Click the button above or go to https://dashboard.render.com/
+2. Connect your GitHub account
+3. Select the `code-harness` repository
+4. Render will auto-detect the `render.yaml` config
+5. Click "Apply"
+6. Once deployed, configure your API key via SSH terminal: `harness key update`
 
 ## Known Limitations
 
