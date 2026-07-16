@@ -75,6 +75,12 @@ export async function main(args: string[] = process.argv.slice(2)) {
     return
   }
 
+  if (command === 'serve') {
+    const { startServer } = await import('./server.js')
+    await startServer()
+    return
+  }
+
   if (command === 'run') {
     const task = rest.join(' ')
     if (!task) {
@@ -108,6 +114,7 @@ export async function main(args: string[] = process.argv.slice(2)) {
 Usage:
   harness configure         Interactive setup
   harness run "<task>"      Run a coding task
+  harness serve             Start WebUI server
   harness key status        Check API key status
   harness key update        Set/update API key
   harness key clear         Remove API key`)
