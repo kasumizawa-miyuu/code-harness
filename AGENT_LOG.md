@@ -84,3 +84,49 @@ Each task implemented by a fresh subagent in its own worktree, following TDD.
 ### Notes on PR Workflow
 
 Due to the workflow sequence (branches merged locally before pushing to GitHub), the 12 worktree branches cannot have standalone PRs on GitHub — their commits are already in `main`. The branches exist on GitHub for reference. In a future project, worktree branches should be pushed to GitHub and PRs created **before** merging to main.
+
+## 2026-07-13 (continued)
+
+### 17: Documentation + Cold Start
+
+**Actions taken:**
+- Created `AGENT_LOG.md`, `SPEC_PROCESS.md`, `REFLECTION.md`
+- Created `cold-start-test/` directory with `SPEC.md` + `PLAN.md`
+- Cold start verification done with Claude Code v2.1.207 (different agent type)
+- Claude Code implemented Task 1 (scaffolding) and Task 5 (ActionParser) — no deviations from SPEC
+- Created 16 PRs from `pr/task-*` branches for all worktree tasks
+- Updated `SPEC_PROCESS.md` with cold start results
+
+### 18: CLI Fixes — baseUrl, configure command
+
+**Issues fixed:**
+- Added `baseUrl` to `Config` interface to support third-party API providers
+- Added `harness configure` interactive command (no more editing config files manually)
+- Added `bin` field to `package.json` so `harness` command works globally
+- Fixed `KeyManager.test.ts` to mock keytar (was failing due to real key in system keychain)
+- Fixed CLI output to show task results instead of only process logs
+
+## 2026-07-16
+
+### 19: WebUI — Express server + HTML interface
+
+**Added:**
+- `src/server.ts` — Express server with API endpoints
+- `public/index.html` — Web UI with task runner interface
+- `harness serve` command to start the web server
+- `render.yaml` for Render deployment
+
+### 20: WebUI Redesign — Professional UI with full functionality
+
+**Improvements:**
+- Complete redesign with sidebar layout (settings panel + task runner)
+- Configuration panel: LLM provider, base URL, model, max retries
+- Key management: status indicator, set/update, clear
+- Verbose toggle: show/hide process logs
+- Environment display: shows working directory
+- API endpoints: `/api/config` (GET/POST), `/api/key` (GET/POST/DELETE), `/api/cwd`
+- Visual design inspired by Open Design design system principles
+
+**Docs updated:**
+- `SPEC.md` — added Open Design to tech stack table
+- `AGENT_LOG.md` — updated with latest changes

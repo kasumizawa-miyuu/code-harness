@@ -380,6 +380,8 @@ GitHub Actions：每次 push 运行 `npm test` + 构建 Docker 镜像。
 | 钥匙串 | keytar | 跨平台（Win/Mac/Linux），课程推荐 |
 | 分发 | npm + Docker | npm 覆盖本地开发者，Docker 覆盖 CI/服务端 |
 | CI | GitHub Actions | 与 GitHub 仓库集成，免费额度充足 |
+| 前端设计系统 | Open Design | 课程推荐，agent-native 设计系统，提供品牌级 UI 组件与模板 |
+| 设计 Skill | Open Design skill | 通过 Open Design 的设计系统与 skill 生成 UI 原型与交互界面 |
 
 ---
 

@@ -5,61 +5,232 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>code-harness</title>
 <style>
+:root {
+  --bg-primary: #0a0e14;
+  --bg-secondary: #121820;
+  --bg-card: #1a2330;
+  --bg-input: #0d131d;
+  --border: #2a3a4a;
+  --border-focus: #4a9eff;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent: #4a9eff;
+  --accent-hover: #6bb0ff;
+  --success: #3fb950;
+  --error: #f85149;
+  --warning: #d29922;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
-.container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
-h1 { font-size: 24px; margin-bottom: 8px; color: #f0f6fc; }
-.subtitle { color: #8b949e; margin-bottom: 32px; }
-.status-bar { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; }
-.status-dot.ok { background: #3fb950; }
-.status-dot.nok { background: #f85149; }
-textarea { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; color: #c9d1d9; padding: 16px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 100px; }
-textarea:focus { outline: none; border-color: #58a6ff; }
-button { background: #238636; color: #fff; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; cursor: pointer; margin-top: 12px; }
-button:hover { background: #2ea043; }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.output { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-top: 24px; white-space: pre-wrap; font-family: 'JetBrains Mono', 'Cascadia Code', monospace; font-size: 13px; line-height: 1.5; min-height: 100px; display: none; }
-.output.show { display: block; }
-.output .meta { color: #8b949e; margin-bottom: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-.output .meta span { margin-right: 16px; }
-.output .meta .success { color: #3fb950; }
-.output .meta .fail { color: #f85149; }
+body { font-family: var(--font); background: var(--bg-primary); color: var(--text-primary); height: 100vh; display: flex; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Layout */
+.sidebar { width: 320px; min-width: 320px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Sidebar */
+.sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
+.sidebar-header h1 { font-size: 18px; font-weight: 600; }
+.sidebar-header p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.sidebar-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.sidebar-section h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px; }
+.sidebar-section label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.sidebar-section input, .sidebar-section select { width: 100%; padding: 8px 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; font-family: var(--font); margin-bottom: 10px; }
+.sidebar-section input:focus, .sidebar-section select:focus { outline: none; border-color: var(--border-focus); }
+.sidebar-section .btn { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-primary); font-size: 13px; cursor: pointer; margin-bottom: 6px; }
+.sidebar-section .btn:hover { background: var(--bg-card); }
+.sidebar-section .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sidebar-section .btn.primary:hover { background: var(--accent-hover); }
+.sidebar-section .btn.danger { border-color: var(--error); color: var(--error); }
+.sidebar-section .btn.danger:hover { background: rgba(248,81,73,0.1); }
+.sidebar-section .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.sidebar-section .toggle-row label { margin-bottom: 0; }
+.toggle { position: relative; width: 36px; height: 20px; cursor: pointer; }
+.toggle input { display: none; }
+.toggle .slider { position: absolute; inset: 0; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; transition: all 0.2s; }
+.toggle .slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; background: var(--text-muted); border-radius: 50%; transition: all 0.2s; }
+.toggle input:checked + .slider { background: var(--accent); border-color: var(--accent); }
+.toggle input:checked + .slider::before { background: #fff; transform: translateX(16px); }
+.status-indicator { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.ok { background: var(--success); }
+.status-dot.nok { background: var(--error); }
+.cwd-display { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); word-break: break-all; padding: 8px; background: var(--bg-input); border-radius: 6px; margin-top: 8px; }
+.toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; border-radius: 6px; font-size: 13px; color: #fff; opacity: 0; transition: opacity 0.3s; z-index: 100; }
+.toast.show { opacity: 1; }
+.toast.success { background: var(--success); }
+.toast.error { background: var(--error); }
+
+/* Main area */
+.main-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.main-header h2 { font-size: 14px; font-weight: 500; }
+.main-content { flex: 1; padding: 24px; display: flex; flex-direction: column; overflow: hidden; }
+.main-content textarea { width: 100%; min-height: 100px; padding: 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 14px; font-family: var(--font); resize: vertical; }
+.main-content textarea:focus { outline: none; border-color: var(--border-focus); }
+.main-content textarea::placeholder { color: var(--text-muted); }
+.run-bar { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.run-btn { padding: 10px 24px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; }
+.run-btn:hover { background: var(--accent-hover); }
+.run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.output-area { flex: 1; margin-top: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow-y: auto; padding: 0; display: none; flex-direction: column; }
+.output-area.show { display: flex; }
+.output-meta { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; font-size: 12px; flex-shrink: 0; }
+.output-meta .tag { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.output-meta .tag.success { background: rgba(63,185,80,0.15); color: var(--success); }
+.output-meta .tag.fail { background: rgba(248,81,73,0.15); color: var(--error); }
+.output-meta .tag.info { background: rgba(74,158,255,0.15); color: var(--accent); }
+.output-body { padding: 16px; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; white-space: pre-wrap; overflow-y: auto; flex: 1; }
+.output-body .exchanges { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.output-body .exchanges h3 { font-family: var(--font); font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.output-body .exchange-entry { margin-bottom: 8px; padding: 8px; background: var(--bg-input); border-radius: 4px; }
+.output-body .exchange-entry .role { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.output-body .exchange-entry .content { color: var(--text-secondary); font-size: 12px; }
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: var(--text-muted); gap: 8px; }
+.empty-state svg { opacity: 0.3; }
+.empty-state p { font-size: 13px; }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>code-harness</h1>
-  <p class="subtitle">Coding Agent Harness — Web Interface</p>
-
-  <div class="status-bar">
-    <span class="status-dot" id="statusDot"></span>
-    <span id="statusText">Checking API key...</span>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1>code-harness</h1>
+    <p>Coding Agent Harness</p>
   </div>
 
-  <textarea id="taskInput" placeholder="Enter a task for the agent...&#10;&#10;Examples:&#10;  - List all files in the current directory&#10;  - Run npm test and fix any failures&#10;  - Add error handling to all functions"></textarea>
-  <br>
-  <button id="runBtn" onclick="runTask()">Run Task</button>
+  <div class="sidebar-section">
+    <h2>Configuration</h2>
+    <label for="llmProvider">LLM Provider</label>
+    <select id="llmProvider">
+      <option value="openai">OpenAI</option>
+      <option value="mock">Mock (no API call)</option>
+    </select>
+    <label for="baseUrl">API Base URL</label>
+    <input id="baseUrl" type="text" placeholder="https://api.openai.com/v1">
+    <label for="model">Model</label>
+    <input id="model" type="text" placeholder="gpt-4o">
+    <label for="maxRetries">Max Retries</label>
+    <input id="maxRetries" type="number" min="1" max="10">
+    <button class="btn primary" onclick="saveConfig()">Save Settings</button>
+    <div class="toggle-row">
+      <label for="verbose">Show process logs</label>
+      <label class="toggle">
+        <input id="verbose" type="checkbox">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
 
-  <div class="output" id="output">
-    <div class="meta" id="outputMeta"></div>
-    <div id="outputContent"></div>
+  <div class="sidebar-section">
+    <h2>API Key</h2>
+    <div class="status-indicator">
+      <span class="status-dot" id="keyDot"></span>
+      <span id="keyStatus">Checking...</span>
+    </div>
+    <button class="btn" onclick="updateKey()">Set / Update Key</button>
+    <button class="btn danger" onclick="clearKey()">Clear Key</button>
+  </div>
+
+  <div class="sidebar-section">
+    <h2>Environment</h2>
+    <div class="cwd-display" id="cwdDisplay">Loading...</div>
   </div>
 </div>
 
+<div class="main">
+  <div class="main-header">
+    <h2>Task Runner</h2>
+  </div>
+  <div class="main-content">
+    <textarea id="taskInput" placeholder="Enter a task description...&#10;&#10;Examples:&#10;  List all files in the current directory&#10;  Run npm test and fix any failures&#10;  Add error handling to all .ts files"></textarea>
+    <div class="run-bar">
+      <button class="run-btn" id="runBtn" onclick="runTask()">Run Task</button>
+    </div>
+    <div class="output-area" id="outputArea">
+      <div class="output-meta" id="outputMeta"></div>
+      <div class="output-body" id="outputBody">
+        <div class="empty-state" id="emptyState">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <p>Run a task to see output here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-async function checkStatus() {
-  const res = await fetch('/api/status')
-  const data = await res.json()
-  const dot = document.getElementById('statusDot')
-  const text = document.getElementById('statusText')
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  })
+  return res.json()
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = `toast ${type} show`
+  setTimeout(() => t.classList.remove('show'), 3000)
+}
+
+async function loadConfig() {
+  const data = await api('/api/config')
+  document.getElementById('llmProvider').value = data.llmProvider || 'openai'
+  document.getElementById('baseUrl').value = data.baseUrl || 'https://api.openai.com/v1'
+  document.getElementById('model').value = data.model || 'gpt-4o'
+  document.getElementById('maxRetries').value = data.maxRetries || 3
+}
+
+async function loadKeyStatus() {
+  const data = await api('/api/key')
+  const dot = document.getElementById('keyDot')
+  const text = document.getElementById('keyStatus')
   if (data.hasKey) {
     dot.className = 'status-dot ok'
-    text.textContent = 'API Key configured'
+    text.textContent = 'Configured'
   } else {
     dot.className = 'status-dot nok'
-    text.textContent = 'No API Key — run "harness key update" in terminal'
+    text.textContent = 'Not configured'
   }
+}
+
+async function loadCwd() {
+  const data = await api('/api/cwd')
+  document.getElementById('cwdDisplay').textContent = data.cwd
+}
+
+async function saveConfig() {
+  const body = {
+    llmProvider: document.getElementById('llmProvider').value,
+    baseUrl: document.getElementById('baseUrl').value,
+    model: document.getElementById('model').value,
+    maxRetries: parseInt(document.getElementById('maxRetries').value) || 3,
+  }
+  await api('/api/config', { method: 'POST', body: JSON.stringify(body) })
+  showToast('Settings saved')
+}
+
+async function updateKey() {
+  const key = prompt('Enter API Key:')
+  if (!key) return
+  await api('/api/key', { method: 'POST', body: JSON.stringify({ key }) })
+  await loadKeyStatus()
+  showToast('API Key saved')
+}
+
+async function clearKey() {
+  if (!confirm('Clear API Key?')) return
+  await api('/api/key', { method: 'DELETE' })
+  await loadKeyStatus()
+  showToast('API Key cleared')
 }
 
 async function runTask() {
@@ -67,42 +238,54 @@ async function runTask() {
   if (!task) return
 
   const btn = document.getElementById('runBtn')
-  const output = document.getElementById('output')
+  const area = document.getElementById('outputArea')
   const meta = document.getElementById('outputMeta')
-  const content = document.getElementById('outputContent')
+  const body = document.getElementById('outputBody')
+  const empty = document.getElementById('emptyState')
 
   btn.disabled = true
   btn.textContent = 'Running...'
-  output.className = 'output show'
-  meta.innerHTML = '<span>Running...</span>'
-  content.textContent = ''
+  area.className = 'output-area show'
+  empty.style.display = 'none'
+  meta.innerHTML = '<span class="tag info">Running...</span>'
+  body.innerHTML = ''
 
   try {
-    const res = await fetch('/api/run', {
+    const data = await api('/api/run', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ task }),
+      body: JSON.stringify({
+        task,
+        verbose: document.getElementById('verbose').checked,
+      }),
     })
-    const data = await res.json()
 
     if (data.status === 'no_key') {
-      meta.innerHTML = `<span class="fail">Error</span>`
-      content.textContent = data.message
+      meta.innerHTML = '<span class="tag fail">Error</span>'
+      body.innerHTML = `<div>${data.message}</div>`
     } else {
       const statusClass = data.success ? 'success' : 'fail'
-      meta.innerHTML = `<span class="${statusClass}">${data.status}</span><span>Retries: ${data.retries}</span>`
-      content.textContent = data.output || '(no output)'
+      meta.innerHTML = `
+        <span class="tag ${statusClass}">${data.status}</span>
+        <span style="color:var(--text-secondary)">Retries: ${data.retries}</span>
+      `
+      let html = `<div>${data.output || '(no output)'}</div>`
+      if (data.exchanges) {
+        html += `<div class="exchanges"><h3>Process Log</h3>${data.exchanges.split('\n---\n').map(e => `<div class="exchange-entry"><div class="content">${e}</div></div>`).join('')}</div>`
+      }
+      body.innerHTML = html
     }
   } catch (err) {
-    meta.innerHTML = `<span class="fail">Error</span>`
-    content.textContent = err.message
+    meta.innerHTML = '<span class="tag fail">Error</span>'
+    body.innerHTML = `<div>${err.message}</div>`
   }
 
   btn.disabled = false
   btn.textContent = 'Run Task'
 }
 
-checkStatus()
+loadConfig()
+loadKeyStatus()
+loadCwd()
 </script>
 </body>
 </html>
