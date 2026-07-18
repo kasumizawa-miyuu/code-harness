@@ -177,24 +177,33 @@ harness run "your task"</div>
   <div class="sidebar-section">
     <h2>Configuration</h2>
     <label for="llmProvider">LLM Provider</label>
-    <select id="llmProvider">
-      <option value="openai">OpenAI-compatible</option>
-      <option value="mock">Mock (no API call)</option>
+    <select id="llmProvider" onchange="onProviderChange()">
+      <option value="openai">OpenAI</option>
+      <option value="deepseek">DeepSeek</option>
+      <option value="groq">Groq</option>
+      <option value="together">Together AI</option>
+      <option value="openrouter">OpenRouter</option>
+      <option value="ollama">Ollama (local)</option>
+      <option value="custom">Custom</option>
     </select>
     <label for="baseUrl">API Base URL</label>
     <input id="baseUrl" type="text" placeholder="https://api.openai.com/v1">
     <label for="model">Model</label>
     <input id="model" type="text" placeholder="gpt-4o">
     <label for="maxRetries">Max Retries</label>
-    <input id="maxRetries" type="number" min="1" max="10">
+    <input id="maxRetries" type="number" min="0" max="10" step="1" placeholder="3">
     <button class="btn primary btn-block" onclick="saveConfig()">Save Settings</button>
     <div class="toggle-row">
-      <label for="verbose">Show process logs</label>
-      <label class="toggle">
+      <label for="verbose" style="font-size:13px;font-weight:500">Show process logs</label>
+      <label class="toggle" style="width:44px;height:24px">
         <input id="verbose" type="checkbox">
-        <span class="slider"></span>
+        <span class="slider" style="border-radius:12px"></span>
       </label>
     </div>
+    <style>
+    .toggle:has(input:checked) .slider::before { transform: translateX(20px); }
+    .toggle .slider::before { width:18px; height:18px; left:2px; top:2px; }
+    </style>
   </div>
   <div class="sidebar-section">
     <h2>API Key</h2>
@@ -286,12 +295,31 @@ function dismissGuide() {
   closeGuide()
 }
 
+const PROVIDER_DEFAULTS = {
+  openai:   { baseUrl: 'https://api.openai.com/v1',           model: 'gpt-4o' },
+  deepseek: { baseUrl: 'https://api.deepseek.com/v1',         model: 'deepseek-chat' },
+  groq:     { baseUrl: 'https://api.groq.com/openai/v1',      model: 'llama-3.3-70b-versatile' },
+  together: { baseUrl: 'https://api.together.xyz/v1',          model: 'mistralai/Mixtral-8x7B-Instruct-v0.1' },
+  openrouter:{ baseUrl: 'https://openrouter.ai/api/v1',        model: 'openai/gpt-4o' },
+  ollama:   { baseUrl: 'http://localhost:11434/v1',           model: 'llama3.2' },
+}
+
+function onProviderChange() {
+  const provider = document.getElementById('llmProvider').value
+  const defaults = PROVIDER_DEFAULTS[provider]
+  if (defaults) {
+    document.getElementById('baseUrl').value = defaults.baseUrl
+    document.getElementById('model').value = defaults.model
+  }
+}
+
 async function loadConfig() {
   const stored = getStoredConfig()
-  document.getElementById('llmProvider').value = stored.llmProvider || 'openai'
-  document.getElementById('baseUrl').value = stored.baseUrl || 'https://api.openai.com/v1'
-  document.getElementById('model').value = stored.model || 'gpt-4o'
-  document.getElementById('maxRetries').value = stored.maxRetries || 3
+  const provider = stored.llmProvider || 'openai'
+  document.getElementById('llmProvider').value = provider
+  document.getElementById('baseUrl').value = stored.baseUrl || PROVIDER_DEFAULTS[provider]?.baseUrl || 'https://api.openai.com/v1'
+  document.getElementById('model').value = stored.model || PROVIDER_DEFAULTS[provider]?.model || 'gpt-4o'
+  document.getElementById('maxRetries').value = stored.maxRetries ?? 3
   document.getElementById('verbose').checked = stored.verbose === true
 }
 
@@ -314,11 +342,12 @@ async function loadCwd() {
 }
 
 async function saveConfig() {
+  const provider = document.getElementById('llmProvider').value
   const config = {
-    llmProvider: document.getElementById('llmProvider').value,
+    llmProvider: provider,
     baseUrl: document.getElementById('baseUrl').value,
     model: document.getElementById('model').value,
-    maxRetries: parseInt(document.getElementById('maxRetries').value) || 3,
+    maxRetries: Math.max(0, parseInt(document.getElementById('maxRetries').value) || 0),
     verbose: document.getElementById('verbose').checked,
   }
   saveConfigToLS(config)
@@ -359,6 +388,8 @@ async function runTask() {
 
   const stored = getStoredConfig()
   const apiKey = getStoredApiKey()
+  const provider = stored.llmProvider || 'openai'
+  const defaults = PROVIDER_DEFAULTS[provider] || {}
 
   try {
     const data = await api('/api/run', {
@@ -367,10 +398,10 @@ async function runTask() {
         task,
         verbose: document.getElementById('verbose').checked,
         apiKey,
-        llmProvider: stored.llmProvider || 'openai',
-        baseUrl: stored.baseUrl || 'https://api.openai.com/v1',
-        model: stored.model || 'gpt-4o',
-        maxRetries: stored.maxRetries || 3,
+        llmProvider: provider,
+        baseUrl: stored.baseUrl || defaults.baseUrl || 'https://api.openai.com/v1',
+        model: stored.model || defaults.model || 'gpt-4o',
+        maxRetries: stored.maxRetries ?? 3,
       }),
     })
 
