@@ -4,12 +4,14 @@ import { createAgentLoop } from './AgentLoop.js'
 import { createLLMProvider } from './LLMProvider.js'
 import { createKeyManager } from './KeyManager.js'
 import { writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
 import { homedir } from 'node:os'
+import { fileURLToPath } from 'node:url'
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
 app.use(express.json())
-app.use(express.static('public'))
+app.use(express.static(join(__dirname, '..', 'public')))
 
 app.post('/api/run', async (req, res) => {
   try {

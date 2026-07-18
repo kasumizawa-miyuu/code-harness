@@ -34,6 +34,7 @@ export async function main(args: string[] = process.argv.slice(2)) {
     const baseUrl = await prompt('API base URL', existing.baseUrl)
     const model = await prompt('Model name', existing.model)
     const maxRetries = await prompt('Max retries', String(existing.maxRetries))
+    const verbose = await prompt('Verbose mode', String(existing.verbose))
 
     const newConfig = {
       ...existing,
@@ -41,6 +42,7 @@ export async function main(args: string[] = process.argv.slice(2)) {
       baseUrl: baseUrl || existing.baseUrl,
       model: model || existing.model,
       maxRetries: parseInt(maxRetries) || existing.maxRetries,
+      verbose: verbose === 'true',
     }
 
     await writeFile(configPath, JSON.stringify(newConfig, null, 2), 'utf-8')
