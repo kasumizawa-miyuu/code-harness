@@ -10,4 +10,6 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY package.json ./
-ENTRYPOINT ["node", "dist/index.js"]
+COPY public/ ./public/
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
