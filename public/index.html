@@ -29,12 +29,8 @@
 body { font-family: var(--font); background: var(--bg-primary); color: var(--text-primary); height: 100vh; display: flex; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
-
-/* Layout */
 .sidebar { width: 320px; min-width: 320px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
 .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-/* Sidebar */
 .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
 .sidebar-header h1 { font-size: 18px; font-weight: 600; }
 .sidebar-header p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
@@ -43,15 +39,17 @@ a:hover { text-decoration: underline; }
 .sidebar-section label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
 .sidebar-section input, .sidebar-section select { width: 100%; padding: 8px 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; font-family: var(--font); margin-bottom: 10px; }
 .sidebar-section input:focus, .sidebar-section select:focus { outline: none; border-color: var(--border-focus); }
-.sidebar-section .btn { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-primary); font-size: 13px; cursor: pointer; margin-bottom: 6px; }
-.sidebar-section .btn:hover { background: var(--bg-card); }
-.sidebar-section .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.sidebar-section .btn.primary:hover { background: var(--accent-hover); }
-.sidebar-section .btn.danger { border-color: var(--error); color: var(--error); }
-.sidebar-section .btn.danger:hover { background: rgba(248,81,73,0.1); }
-.sidebar-section .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.sidebar-section .toggle-row label { margin-bottom: 0; }
-.toggle { position: relative; width: 36px; height: 20px; cursor: pointer; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-primary); font-size: 13px; cursor: pointer; }
+.btn:hover { background: var(--bg-card); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-hover); }
+.btn.danger { border-color: var(--error); color: var(--error); }
+.btn.danger:hover { background: rgba(248,81,73,0.1); }
+.btn.small { padding: 4px 10px; font-size: 11px; }
+.btn-block { width: 100%; margin-bottom: 6px; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.toggle-row label { margin-bottom: 0; }
+.toggle { position: relative; width: 36px; height: 20px; cursor: pointer; flex-shrink: 0; }
 .toggle input { display: none; }
 .toggle .slider { position: absolute; inset: 0; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; transition: all 0.2s; }
 .toggle .slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; background: var(--text-muted); border-radius: 50%; transition: all 0.2s; }
@@ -62,12 +60,10 @@ a:hover { text-decoration: underline; }
 .status-dot.ok { background: var(--success); }
 .status-dot.nok { background: var(--error); }
 .cwd-display { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); word-break: break-all; padding: 8px; background: var(--bg-input); border-radius: 6px; margin-top: 8px; }
-.toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; border-radius: 6px; font-size: 13px; color: #fff; opacity: 0; transition: opacity 0.3s; z-index: 100; }
+.toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; border-radius: 6px; font-size: 13px; color: #fff; opacity: 0; transition: opacity 0.3s; z-index: 1000; }
 .toast.show { opacity: 1; }
 .toast.success { background: var(--success); }
 .toast.error { background: var(--error); }
-
-/* Main area */
 .main-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 .main-header h2 { font-size: 14px; font-weight: 500; }
 .main-content { flex: 1; padding: 24px; display: flex; flex-direction: column; overflow: hidden; }
@@ -81,33 +77,108 @@ a:hover { text-decoration: underline; }
 .output-area { flex: 1; margin-top: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow-y: auto; padding: 0; display: none; flex-direction: column; }
 .output-area.show { display: flex; }
 .output-meta { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; font-size: 12px; flex-shrink: 0; }
-.output-meta .tag { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-.output-meta .tag.success { background: rgba(63,185,80,0.15); color: var(--success); }
-.output-meta .tag.fail { background: rgba(248,81,73,0.15); color: var(--error); }
-.output-meta .tag.info { background: rgba(74,158,255,0.15); color: var(--accent); }
+.tag { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.tag.success { background: rgba(63,185,80,0.15); color: var(--success); }
+.tag.fail { background: rgba(248,81,73,0.15); color: var(--error); }
+.tag.info { background: rgba(74,158,255,0.15); color: var(--accent); }
 .output-body { padding: 16px; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; white-space: pre-wrap; overflow-y: auto; flex: 1; }
 .output-body .exchanges { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
-.output-body .exchanges h3 { font-family: var(--font); font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
-.output-body .exchange-entry { margin-bottom: 8px; padding: 8px; background: var(--bg-input); border-radius: 4px; }
-.output-body .exchange-entry .role { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-.output-body .exchange-entry .content { color: var(--text-secondary); font-size: 12px; }
+.exchanges h3 { font-family: var(--font); font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.exchange-entry { margin-bottom: 8px; padding: 8px; background: var(--bg-input); border-radius: 4px; }
+.exchange-entry .role { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.exchange-entry .content { color: var(--text-secondary); font-size: 12px; }
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: var(--text-muted); gap: 8px; }
 .empty-state svg { opacity: 0.3; }
 .empty-state p { font-size: 13px; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; width: 600px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+.modal-header { padding: 20px 24px 0; display: flex; align-items: center; justify-content: space-between; }
+.modal-header h2 { font-size: 16px; font-weight: 600; }
+.modal-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px; line-height: 1; }
+.modal-close:hover { color: var(--text-primary); }
+.modal-body { padding: 16px 24px 24px; }
+.modal-section { margin-bottom: 20px; }
+.modal-section h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+.modal-section p, .modal-section li { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.modal-section ul { padding-left: 18px; }
+.modal-section li { margin-bottom: 4px; }
+.modal-section code { font-family: var(--font-mono); font-size: 12px; background: var(--bg-input); padding: 2px 6px; border-radius: 4px; color: var(--accent); }
+.modal-section .code-block { font-family: var(--font-mono); font-size: 12px; background: var(--bg-input); padding: 10px 12px; border-radius: 6px; color: var(--text-primary); margin: 6px 0; overflow-x: auto; white-space: pre; }
+.modal-footer { padding: 0 24px 20px; display: flex; justify-content: flex-end; gap: 8px; }
+.file-list { margin-top: 8px; }
+.file-item { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: var(--text-secondary); font-family: var(--font-mono); }
+.file-item .icon { color: var(--text-muted); flex-shrink: 0; }
 </style>
 </head>
 <body>
-<div class="sidebar" id="sidebar">
+
+<div class="modal-overlay" id="guideModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>User Guide</h2>
+      <button class="modal-close" onclick="closeGuide()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <h3>What is code-harness?</h3>
+        <p>A lightweight Coding Agent Harness with a feedback-loop-driven main loop. It reads your task, calls an LLM, executes actions (read/write files, run commands), and adapts based on verification results.</p>
+      </div>
+      <div class="modal-section">
+        <h3>Using the WebUI</h3>
+        <ul>
+          <li>Configure your <strong>LLM provider</strong>, <strong>API base URL</strong>, and <strong>model</strong> in the sidebar</li>
+          <li>Set your <strong>API Key</strong> via the sidebar (stored securely in OS keychain)</li>
+          <li>Type a task and click <strong>Run Task</strong></li>
+          <li>Toggle <strong>Show process logs</strong> to see the agent's reasoning</li>
+        </ul>
+      </div>
+      <div class="modal-section">
+        <h3>Working with Local Files (Docker)</h3>
+        <p>To give the WebUI access to your local files, run with Docker volume mount:</p>
+        <div class="code-block">docker run -v $(pwd):/workspace -w /workspace -p 3000:3000 code-harness</div>
+        <p>This mounts your current directory into <code>/workspace</code> inside the container. The agent can read, write, and modify files in this directory.</p>
+      </div>
+      <div class="modal-section">
+        <h3>Using the CLI (Direct Access)</h3>
+        <p>Clone the repository to use the CLI directly on your local files:</p>
+        <div class="code-block">git clone https://github.com/kasumizawa-miyuu/code-harness.git
+cd code-harness
+npm install
+npm run build
+npm link
+harness configure
+harness key update
+harness run "your task"</div>
+        <p>CLI works directly on your local filesystem — no Docker needed.</p>
+      </div>
+      <div class="modal-section">
+        <h3>Remote Deployment</h3>
+        <p>When deployed remotely (Render, etc.), the WebUI operates on the server's filesystem. Use Docker with volume mounts to connect your local files.</p>
+      </div>
+      <div class="modal-section">
+        <h3>Project Repository</h3>
+        <p><a href="https://github.com/kasumizawa-miyuu/code-harness" target="_blank">https://github.com/kasumizawa-miyuu/code-harness</a></p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="dismissGuide()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar">
   <div class="sidebar-header">
     <h1>code-harness</h1>
     <p>Coding Agent Harness</p>
   </div>
-
   <div class="sidebar-section">
     <h2>Configuration</h2>
     <label for="llmProvider">LLM Provider</label>
     <select id="llmProvider">
-      <option value="openai">OpenAI</option>
+      <option value="openai">OpenAI-compatible</option>
       <option value="mock">Mock (no API call)</option>
     </select>
     <label for="baseUrl">API Base URL</label>
@@ -116,7 +187,7 @@ a:hover { text-decoration: underline; }
     <input id="model" type="text" placeholder="gpt-4o">
     <label for="maxRetries">Max Retries</label>
     <input id="maxRetries" type="number" min="1" max="10">
-    <button class="btn primary" onclick="saveConfig()">Save Settings</button>
+    <button class="btn primary btn-block" onclick="saveConfig()">Save Settings</button>
     <div class="toggle-row">
       <label for="verbose">Show process logs</label>
       <label class="toggle">
@@ -125,30 +196,26 @@ a:hover { text-decoration: underline; }
       </label>
     </div>
   </div>
-
   <div class="sidebar-section">
     <h2>API Key</h2>
     <div class="status-indicator">
       <span class="status-dot" id="keyDot"></span>
       <span id="keyStatus">Checking...</span>
     </div>
-    <button class="btn" onclick="updateKey()">Set / Update Key</button>
-    <button class="btn danger" onclick="clearKey()">Clear Key</button>
+    <button class="btn btn-block" onclick="updateKey()">Set / Update Key</button>
+    <button class="btn danger btn-block" onclick="clearKey()">Clear Key</button>
   </div>
-
   <div class="sidebar-section">
     <h2>Environment</h2>
     <div class="cwd-display" id="cwdDisplay">Loading...</div>
-    <div style="font-size:10px;color:var(--text-muted);margin-top:6px;line-height:1.4">
-      The agent operates on files in this directory.
-      For remote deployment, use Docker volume mounts to give the server access to your local files.
-    </div>
+    <div id="fileList" class="file-list"></div>
   </div>
 </div>
 
 <div class="main">
   <div class="main-header">
     <h2>Task Runner</h2>
+    <button class="btn small" onclick="openGuide()">User Guide</button>
   </div>
   <div class="main-content">
     <textarea id="taskInput" placeholder="Enter a task description...&#10;&#10;Examples:&#10;  List all files in the current directory&#10;  Run npm test and fix any failures&#10;  Add error handling to all .ts files"></textarea>
@@ -170,6 +237,8 @@ a:hover { text-decoration: underline; }
 <div class="toast" id="toast"></div>
 
 <script>
+const GUIDE_DISMISSED = 'code-harness-guide-dismissed'
+
 async function api(url, opts = {}) {
   const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json' },
@@ -183,6 +252,19 @@ function showToast(msg, type = 'success') {
   t.textContent = msg
   t.className = `toast ${type} show`
   setTimeout(() => t.classList.remove('show'), 3000)
+}
+
+function openGuide() {
+  document.getElementById('guideModal').className = 'modal-overlay show'
+}
+
+function closeGuide() {
+  document.getElementById('guideModal').className = 'modal-overlay'
+}
+
+function dismissGuide() {
+  localStorage.setItem(GUIDE_DISMISSED, 'true')
+  closeGuide()
 }
 
 async function loadConfig() {
@@ -268,10 +350,7 @@ async function runTask() {
       body.innerHTML = `<div>${data.message}</div>`
     } else {
       const statusClass = data.success ? 'success' : 'fail'
-      meta.innerHTML = `
-        <span class="tag ${statusClass}">${data.status}</span>
-        <span style="color:var(--text-secondary)">Retries: ${data.retries}</span>
-      `
+      meta.innerHTML = `<span class="tag ${statusClass}">${data.status}</span><span style="color:var(--text-secondary)">Retries: ${data.retries}</span>`
       let html = `<div>${data.output || '(no output)'}</div>`
       if (data.exchanges) {
         html += `<div class="exchanges"><h3>Process Log</h3>${data.exchanges.split('\n---\n').map(e => `<div class="exchange-entry"><div class="content">${e}</div></div>`).join('')}</div>`
@@ -290,6 +369,7 @@ async function runTask() {
 loadConfig()
 loadKeyStatus()
 loadCwd()
+if (!localStorage.getItem(GUIDE_DISMISSED)) { openGuide() }
 </script>
 </body>
 </html>

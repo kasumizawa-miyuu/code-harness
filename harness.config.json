@@ -17,5 +17,5 @@
   "toolTimeout": 30000,
   "llmTimeout": 60000,
   "memoryFile": ".harness-memory.json",
-  "verbose": false
+  "verbose": true
 }

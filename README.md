@@ -4,16 +4,36 @@ A lightweight, feedback-loop-driven Coding Agent Harness. Built for the AI4SE fi
 
 ## Quick Start
 
+### Option 1: CLI (direct access to local files)
+
 ```bash
 # Install
-npm install -g @student/code-harness
+git clone https://github.com/kasumizawa-miyuu/code-harness.git
+cd code-harness
+npm install
+npm run build
+npm link
 
-# Configure API key
+# Configure
+harness configure
 harness key update
 
 # Run a task
 harness run "fix the failing test"
 ```
+
+### Option 2: Docker (WebUI with local file access)
+
+```bash
+docker build -t code-harness .
+docker run -v $(pwd):/workspace -w /workspace -p 3000:3000 code-harness
+```
+
+Then open http://localhost:3000. The `-v $(pwd):/workspace` mount gives the WebUI access to your current directory's files.
+
+### Option 3: Deployed WebUI
+
+Visit the deployed instance (no installation needed), but the WebUI operates on the server's filesystem. Use Docker volume mounts to connect your local files.
 
 ## Commands
 
@@ -42,10 +62,16 @@ npm install -g @student/code-harness
 
 ### Docker
 
+Build and run with local file access:
+
 ```bash
 docker build -t code-harness .
-docker run -v $(pwd):/workspace -w /workspace code-harness run "add error handling"
+docker run -v $(pwd):/workspace -w /workspace -p 3000:3000 code-harness
 ```
+
+The `-v $(pwd):/workspace` mount makes your current directory available to the agent inside the container at `/workspace`. The `-p 3000:3000` exposes the WebUI on your local machine.
+
+### npm
 
 ## Development
 
@@ -104,6 +130,8 @@ harness serve
 ```
 
 Open http://localhost:3000 in your browser.
+
+The WebUI includes a **User Guide** modal with instructions on Docker volume mounts, CLI usage, and the GitHub repository link.
 
 ### Deploy to Render
 
