@@ -1,10 +1,8 @@
 import express from 'express'
-import { loadConfig } from './Config.js'
 import { createAgentLoop } from './AgentLoop.js'
 import { createLLMProvider } from './LLMProvider.js'
-import { createKeyManager } from './KeyManager.js'
-import { writeFile } from 'node:fs/promises'
-import { join, dirname } from 'node:path'
+import { createLogger } from './Logger.js'
+import { dirname } from 'node:path'
 import { homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
@@ -13,22 +11,33 @@ const app = express()
 app.use(express.json())
 app.use(express.static(join(__dirname, '..', 'public')))
 
+import { join } from 'node:path'
+
 app.post('/api/run', async (req, res) => {
   try {
-    const { task, verbose } = req.body
+    const { task, verbose, apiKey, llmProvider, baseUrl, model, maxRetries } = req.body
     if (!task) {
       return res.status(400).json({ error: 'Missing task description' })
     }
 
-    const config = await loadConfig('harness.config.json')
-    config.verbose = verbose === true
-
-    const km = createKeyManager()
-    const key = await km.getKey()
-    if (!key) {
-      return res.json({ status: 'no_key', message: 'No API Key configured. Run: harness key update' })
+    const config = {
+      llmProvider: llmProvider || 'mock',
+      apiKey: apiKey || '',
+      baseUrl: baseUrl || 'https://api.openai.com/v1',
+      model: model || 'gpt-4o',
+      maxRetries: maxRetries || 3,
+      workDir: process.cwd(),
+      dangerousCommands: ['rm -rf /', 'rm -rf /*', 'rm -rf ~', 'dd if='],
+      allowedPaths: [process.cwd()],
+      toolTimeout: 30000,
+      llmTimeout: 60000,
+      memoryFile: '.harness-memory.json',
+      verbose: verbose === true,
     }
-    config.apiKey = key
+
+    if (!config.apiKey) {
+      return res.json({ status: 'no_key', message: 'No API Key configured. Enter your API key in the sidebar.' })
+    }
 
     const loop = createAgentLoop(config, await createLLMProvider(config))
     const result = await loop.run(task)
@@ -47,49 +56,6 @@ app.post('/api/run', async (req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: err.message })
   }
-})
-
-app.get('/api/config', async (_req, res) => {
-  const config = await loadConfig('harness.config.json')
-  const { apiKey, ...safe } = config as any
-  safe.apiKey = ''
-  res.json(safe)
-})
-
-app.post('/api/config', async (req, res) => {
-  try {
-    const configPath = join(process.cwd(), 'harness.config.json')
-    const existing = await loadConfig(configPath)
-    const merged = { ...existing, ...req.body }
-    await writeFile(configPath, JSON.stringify(merged, null, 2), 'utf-8')
-    res.json({ success: true })
-  } catch (err: any) {
-    res.status(500).json({ error: err.message })
-  }
-})
-
-app.get('/api/key', async (_req, res) => {
-  const km = createKeyManager()
-  const hasKey = await km.hasKey()
-  res.json({ hasKey })
-})
-
-app.post('/api/key', async (req, res) => {
-  try {
-    const { key } = req.body
-    if (!key) return res.status(400).json({ error: 'Missing key' })
-    const km = createKeyManager()
-    await km.setKey(key)
-    res.json({ success: true })
-  } catch (err: any) {
-    res.status(500).json({ error: err.message })
-  }
-})
-
-app.delete('/api/key', async (_req, res) => {
-  const km = createKeyManager()
-  await km.clearKey()
-  res.json({ success: true })
 })
 
 app.get('/api/cwd', (_req, res) => {

@@ -238,6 +238,25 @@ harness run "your task"</div>
 
 <script>
 const GUIDE_DISMISSED = 'code-harness-guide-dismissed'
+const CONFIG_KEY = 'code-harness-config'
+const API_KEY_KEY = 'code-harness-api-key'
+
+function getStoredConfig() {
+  try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {} } catch { return {} }
+}
+
+function getStoredApiKey() {
+  return localStorage.getItem(API_KEY_KEY) || ''
+}
+
+function saveConfigToLS(config) {
+  const existing = getStoredConfig()
+  localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...existing, ...config }))
+}
+
+function saveApiKeyToLS(key) {
+  localStorage.setItem(API_KEY_KEY, key)
+}
 
 async function api(url, opts = {}) {
   const res = await fetch(url, {
@@ -268,20 +287,21 @@ function dismissGuide() {
 }
 
 async function loadConfig() {
-  const data = await api('/api/config')
-  document.getElementById('llmProvider').value = data.llmProvider || 'openai'
-  document.getElementById('baseUrl').value = data.baseUrl || 'https://api.openai.com/v1'
-  document.getElementById('model').value = data.model || 'gpt-4o'
-  document.getElementById('maxRetries').value = data.maxRetries || 3
+  const stored = getStoredConfig()
+  document.getElementById('llmProvider').value = stored.llmProvider || 'openai'
+  document.getElementById('baseUrl').value = stored.baseUrl || 'https://api.openai.com/v1'
+  document.getElementById('model').value = stored.model || 'gpt-4o'
+  document.getElementById('maxRetries').value = stored.maxRetries || 3
+  document.getElementById('verbose').checked = stored.verbose === true
 }
 
 async function loadKeyStatus() {
-  const data = await api('/api/key')
+  const key = getStoredApiKey()
   const dot = document.getElementById('keyDot')
   const text = document.getElementById('keyStatus')
-  if (data.hasKey) {
+  if (key) {
     dot.className = 'status-dot ok'
-    text.textContent = 'Configured'
+    text.textContent = 'Configured (browser)'
   } else {
     dot.className = 'status-dot nok'
     text.textContent = 'Not configured'
@@ -294,27 +314,28 @@ async function loadCwd() {
 }
 
 async function saveConfig() {
-  const body = {
+  const config = {
     llmProvider: document.getElementById('llmProvider').value,
     baseUrl: document.getElementById('baseUrl').value,
     model: document.getElementById('model').value,
     maxRetries: parseInt(document.getElementById('maxRetries').value) || 3,
+    verbose: document.getElementById('verbose').checked,
   }
-  await api('/api/config', { method: 'POST', body: JSON.stringify(body) })
-  showToast('Settings saved')
+  saveConfigToLS(config)
+  showToast('Settings saved to browser')
 }
 
 async function updateKey() {
   const key = prompt('Enter API Key:')
   if (!key) return
-  await api('/api/key', { method: 'POST', body: JSON.stringify({ key }) })
+  saveApiKeyToLS(key)
   await loadKeyStatus()
-  showToast('API Key saved')
+  showToast('API Key saved to browser')
 }
 
 async function clearKey() {
-  if (!confirm('Clear API Key?')) return
-  await api('/api/key', { method: 'DELETE' })
+  if (!confirm('Clear API Key from browser?')) return
+  localStorage.removeItem(API_KEY_KEY)
   await loadKeyStatus()
   showToast('API Key cleared')
 }
@@ -336,12 +357,20 @@ async function runTask() {
   meta.innerHTML = '<span class="tag info">Running...</span>'
   body.innerHTML = ''
 
+  const stored = getStoredConfig()
+  const apiKey = getStoredApiKey()
+
   try {
     const data = await api('/api/run', {
       method: 'POST',
       body: JSON.stringify({
         task,
         verbose: document.getElementById('verbose').checked,
+        apiKey,
+        llmProvider: stored.llmProvider || 'openai',
+        baseUrl: stored.baseUrl || 'https://api.openai.com/v1',
+        model: stored.model || 'gpt-4o',
+        maxRetries: stored.maxRetries || 3,
       }),
     })
 
