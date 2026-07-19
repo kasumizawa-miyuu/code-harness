@@ -135,14 +135,9 @@ The WebUI includes a **User Guide** modal with instructions on Docker volume mou
 
 ### Deploy to Render
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+The project is deployed at: **https://code-harness.onrender.com**
 
-1. Click the button above or go to https://dashboard.render.com/
-2. Connect your GitHub account
-3. Select the `code-harness` repository
-4. Render will auto-detect the `render.yaml` config
-5. Click "Apply"
-6. Once deployed, configure your API key via SSH terminal: `harness key update`
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://dashboard.render.com/)
 
 ## Known Limitations
 
