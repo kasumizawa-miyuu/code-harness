@@ -6,6 +6,8 @@
 
 **Prompt context:** "AI4SE 期末项目，选择 Coding Agent Harness 方向"
 
+**Key prompt:** "你究竟想做什么？选哪个方向？为什么选这个？移除 LLM 后还能测试吗？"
+
 **Key interactions:**
 - AI 追问了三个设计方案：A) 反馈闭环驱动，B) 多 Agent 编排，C) 上下文工程
 - 选择了 A（反馈闭环驱动），原因：代码密度最高、确定性测试最清晰、最符合"机制必须是代码"的要求
@@ -16,6 +18,21 @@
 - 选择 A 方案而非 B/C
 - 采用 Clean Loop 架构而非事件驱动
 - 决定 npm + Docker 双分发形态
+
+**Subagent output fragment:** "核心等式是 Agent = LLM + Harness。LLM 相当于 CPU，只负责决定下一步做什么这一行任务决策；其余都是工程。"
+
+### 01: Writing Plans — Skill: `writing-plans`
+
+**Prompt context:** "将设计分解为每步 2-5 分钟、明确文件路径、明确验证步骤的 task 列表"
+
+**Output:** `PLAN.md` with 17 tasks, each with test-first TDD steps, file paths, and verification commands.
+
+**Key prompt for each task:** "先写失败测试 → 运行确认红色 → 实现 → 运行确认绿色"
+
+**Key decisions:**
+- Task 1-17: 从脚手架到 README，颗粒度为每个模块 2-5 分钟
+- 每个 task 包含"先写失败测试 → 实现 → 验证通过"的完整 TDD 循环
+- 依赖关系标注：Task 2-10 可并行，Task 11 依赖 2-10，Task 14-17 依赖 11
 
 ### 01: Writing Plans — Skill: `writing-plans`
 
@@ -65,6 +82,8 @@ Each task implemented by a fresh subagent in its own worktree, following TDD.
 
 ### 15: Code Review — Skill: `requesting-code-review`
 
+**Prompt context:** "评审所有已实现的代码，检查 spec 合规性和代码质量"
+
 **Review findings:**
 1. AgentLoop provider used `createMockLLMProvider` directly instead of config-based selection
 2. `readline` import used wrong API (`question` vs `createInterface`)
@@ -72,6 +91,8 @@ Each task implemented by a fresh subagent in its own worktree, following TDD.
 4. Missing `harness.config.json` default config
 
 **Fixes applied:** Commit `2bc040f` — addressed all 4 findings.
+
+**Subagent output fragment:** "fix: address final review — AgentLoop provider, readline import, help text, default config (subagent: fix)"
 
 ### 16: Post-Review
 

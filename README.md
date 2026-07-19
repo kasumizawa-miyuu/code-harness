@@ -133,6 +133,17 @@ Open http://localhost:3000 in your browser.
 
 The WebUI includes a **User Guide** modal with instructions on Docker volume mounts, CLI usage, and the GitHub repository link.
 
+### Deployment Architecture
+
+The project is deployed on **Render** (free tier) as a Node.js web service:
+
+- **Platform:** Render Web Service (US Oregon region)
+- **Instance:** Free tier (512MB RAM, 0.1 CPU) — spins down after 15 min inactivity, wakes on first request
+- **CI/CD:** GitHub Actions runs `npm test` + `npx tsc --noEmit` on every push, then builds Docker image
+- **WebUI:** Express server serving static files from `public/`, API endpoints under `/api/`
+- **Config storage:** Browser localStorage — no server-side persistence, each user's config is private
+- **Deployed URL:** https://code-harness.onrender.com
+
 ### Deploy to Render
 
 The project is deployed at: **https://code-harness.onrender.com**
