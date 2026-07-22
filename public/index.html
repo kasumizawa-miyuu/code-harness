@@ -1,149 +1,787 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>code-harness</title>
-<style>
-:root {
-  --bg-primary: #0a0e14;
-  --bg-secondary: #121820;
-  --bg-card: #1a2330;
-  --bg-input: #0d131d;
-  --border: #2a3a4a;
-  --border-focus: #4a9eff;
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --text-muted: #6e7681;
-  --accent: #4a9eff;
-  --accent-hover: #6bb0ff;
-  --success: #3fb950;
-  --error: #f85149;
-  --warning: #d29922;
-  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-  --radius: 8px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
-}
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: var(--font); background: var(--bg-primary); color: var(--text-primary); height: 100vh; display: flex; }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-.sidebar { width: 320px; min-width: 320px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
-.sidebar-header h1 { font-size: 18px; font-weight: 600; }
-.sidebar-header p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-.sidebar-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
-.sidebar-section h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px; }
-.sidebar-section label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
-.sidebar-section input, .sidebar-section select { width: 100%; padding: 8px 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; font-family: var(--font); margin-bottom: 10px; }
-.sidebar-section input:focus, .sidebar-section select:focus { outline: none; border-color: var(--border-focus); }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-primary); font-size: 13px; cursor: pointer; }
-.btn:hover { background: var(--bg-card); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn.primary:hover { background: var(--accent-hover); }
-.btn.danger { border-color: var(--error); color: var(--error); }
-.btn.danger:hover { background: rgba(248,81,73,0.1); }
-.btn.small { padding: 4px 10px; font-size: 11px; }
-.btn-block { width: 100%; margin-bottom: 6px; }
-.toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.toggle-row label { margin-bottom: 0; }
-.toggle { position: relative; width: 36px; height: 20px; cursor: pointer; flex-shrink: 0; }
-.toggle input { display: none; }
-.toggle .slider { position: absolute; inset: 0; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; transition: all 0.2s; }
-.toggle .slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; background: var(--text-muted); border-radius: 50%; transition: all 0.2s; }
-.toggle input:checked + .slider { background: var(--accent); border-color: var(--accent); }
-.toggle input:checked + .slider::before { background: #fff; transform: translateX(16px); }
-.status-indicator { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.status-dot.ok { background: var(--success); }
-.status-dot.nok { background: var(--error); }
-.cwd-display { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); word-break: break-all; padding: 8px; background: var(--bg-input); border-radius: 6px; margin-top: 8px; }
-.toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; border-radius: 6px; font-size: 13px; color: #fff; opacity: 0; transition: opacity 0.3s; z-index: 1000; }
-.toast.show { opacity: 1; }
-.toast.success { background: var(--success); }
-.toast.error { background: var(--error); }
-.main-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.main-header h2 { font-size: 14px; font-weight: 500; }
-.main-content { flex: 1; padding: 24px; display: flex; flex-direction: column; overflow: hidden; }
-.main-content textarea { width: 100%; min-height: 100px; padding: 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 14px; font-family: var(--font); resize: vertical; }
-.main-content textarea:focus { outline: none; border-color: var(--border-focus); }
-.main-content textarea::placeholder { color: var(--text-muted); }
-.run-bar { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
-.run-btn { padding: 10px 24px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; }
-.run-btn:hover { background: var(--accent-hover); }
-.run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.output-area { flex: 1; margin-top: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow-y: auto; padding: 0; display: none; flex-direction: column; }
-.output-area.show { display: flex; }
-.output-meta { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; font-size: 12px; flex-shrink: 0; }
-.tag { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-.tag.success { background: rgba(63,185,80,0.15); color: var(--success); }
-.tag.fail { background: rgba(248,81,73,0.15); color: var(--error); }
-.tag.info { background: rgba(74,158,255,0.15); color: var(--accent); }
-.output-body { padding: 16px; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; white-space: pre-wrap; overflow-y: auto; flex: 1; }
-.output-body .exchanges { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
-.exchanges h3 { font-family: var(--font); font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
-.exchange-entry { margin-bottom: 8px; padding: 8px; background: var(--bg-input); border-radius: 4px; }
-.exchange-entry .role { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-.exchange-entry .content { color: var(--text-secondary); font-size: 12px; }
-.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: var(--text-muted); gap: 8px; }
-.empty-state svg { opacity: 0.3; }
-.empty-state p { font-size: 13px; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>code-harness · Coding Agent 工作台</title>
+  <style>
+    :root {
+      /* Stripe tokens — light theme */
+      --bg:           #ffffff;
+      --surface:      #ffffff;
+      --surface-warm: #f6f9fc;
+      --fg:           #061b31;
+      --fg-2:         #273951;
+      --muted:        #64748d;
+      --border:       #e5edf5;
+      --accent:       #533afd;
+      --accent-on:    #ffffff;
+      --accent-hover: #4434d4;
+      --accent-active:#2e2b8c;
+      --accent-soft:  color-mix(in oklab, var(--accent) 14%, transparent);
+      --success:      #15be53;
+      --success-soft: rgba(21,190,83,0.2);
+      --success-text: #108c3d;
+      --danger:       #ea2261;
+      --danger-soft:  rgba(234,34,97,0.12);
+      --warn:         #9b6829;
+      --warn-soft:    rgba(155,104,41,0.12);
+      --font-display: "sohne-var", "Söhne", "Sohne", "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, "Helvetica Neue", Arial, sans-serif;
+      --font-body:    "sohne-var", "Söhne", "Sohne", "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, "Helvetica Neue", Arial, sans-serif;
+      --font-mono:    "SourceCodePro", "Source Code Pro", ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+      --radius-sm:    4px;
+      --radius-md:    6px;
+      --radius-lg:    8px;
+      --elev-raised:  rgba(50,50,93,0.25) 0px 30px 45px -30px, rgba(0,0,0,0.1) 0px 18px 36px -18px;
+      --elev-card:    rgba(23,23,23,0.08) 0px 15px 35px 0px;
+      --elev-flat:    none;
+      --focus-ring:   0 0 0 2px var(--accent), 0 0 0 5px color-mix(in oklab, var(--accent), transparent 75%);
+      --motion-fast:  150ms;
+      --motion-base:  200ms;
+      --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+      --topnav-h:     52px;
+      --sidebar-w:    280px;
+      --rightpanel-w: 320px;
+      --toast-text:   #ffffff;
+    }
 
-/* Modal */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; align-items: center; justify-content: center; }
-.modal-overlay.show { display: flex; }
-.modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; width: 600px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
-.modal-header { padding: 20px 24px 0; display: flex; align-items: center; justify-content: space-between; }
-.modal-header h2 { font-size: 16px; font-weight: 600; }
-.modal-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px; line-height: 1; }
-.modal-close:hover { color: var(--text-primary); }
-.modal-body { padding: 16px 24px 24px; }
-.modal-section { margin-bottom: 20px; }
-.modal-section h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
-.modal-section p, .modal-section li { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
-.modal-section ul { padding-left: 18px; }
-.modal-section li { margin-bottom: 4px; }
-.modal-section code { font-family: var(--font-mono); font-size: 12px; background: var(--bg-input); padding: 2px 6px; border-radius: 4px; color: var(--accent); }
-.modal-section .code-block { font-family: var(--font-mono); font-size: 12px; background: var(--bg-input); padding: 10px 12px; border-radius: 6px; color: var(--text-primary); margin: 6px 0; overflow-x: auto; white-space: pre; }
-.modal-footer { padding: 0 24px 20px; display: flex; justify-content: flex-end; gap: 8px; }
-.file-list { margin-top: 8px; }
-.file-item { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; color: var(--text-secondary); font-family: var(--font-mono); }
-.file-item .icon { color: var(--text-muted); flex-shrink: 0; }
-</style>
+    :root[data-theme="dark"] {
+      --bg:           #0d1117;
+      --surface:      #161b22;
+      --surface-warm: #1c2333;
+      --fg:           #e6edf3;
+      --fg-2:         #c9d1d9;
+      --muted:        #8b949e;
+      --border:       #30363d;
+      --accent:       #6bb0ff;
+      --accent-on:    #0d1117;
+      --accent-hover: #8ec4ff;
+      --accent-active:#a8d4ff;
+      --accent-soft:  color-mix(in oklab, var(--accent) 20%, transparent);
+      --elev-raised:  rgba(0,0,0,0.4) 0px 30px 45px -30px, rgba(0,0,0,0.3) 0px 18px 36px -18px;
+      --elev-card:    rgba(0,0,0,0.3) 0px 15px 35px 0px;
+      --success:      #3fb950;
+      --success-soft: rgba(63,185,80,0.15);
+      --success-text: #3fb950;
+      --danger:       #f85149;
+      --danger-soft:  rgba(248,81,73,0.12);
+      --warn:         #d29922;
+      --warn-soft:    rgba(210,153,34,0.12);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg:           #0d1117;
+        --surface:      #161b22;
+        --surface-warm: #1c2333;
+        --fg:           #e6edf3;
+        --fg-2:         #c9d1d9;
+        --muted:        #8b949e;
+        --border:       #30363d;
+        --accent:       #6bb0ff;
+        --accent-on:    #0d1117;
+        --accent-hover: #8ec4ff;
+        --accent-active:#a8d4ff;
+        --accent-soft:  color-mix(in oklab, var(--accent) 20%, transparent);
+        --elev-raised:  rgba(0,0,0,0.4) 0px 30px 45px -30px, rgba(0,0,0,0.3) 0px 18px 36px -18px;
+        --elev-card:    rgba(0,0,0,0.3) 0px 15px 35px 0px;
+        --success:      #3fb950;
+        --success-soft: rgba(63,185,80,0.15);
+        --success-text: #3fb950;
+        --danger:       #f85149;
+        --danger-soft:  rgba(248,81,73,0.12);
+        --warn:         #d29922;
+        --warn-soft:    rgba(210,153,34,0.12);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; height: 100%; }
+    body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.5;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      font-feature-settings: "ss01";
+      overflow: hidden;
+    }
+    img, svg { display: block; max-width: 100%; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-hover); }
+    button { font: inherit; cursor: pointer; border: none; background: none; }
+    p { margin: 0; }
+    h1, h2, h3, h4 { margin: 0; font-weight: 300; }
+    input, select, textarea { font: inherit; }
+
+    /* ─── Topnav ─────────────────────────────────────────────── */
+    .topnav {
+      height: var(--topnav-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: color-mix(in oklch, var(--bg) 90%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .topnav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      color: var(--fg);
+    }
+    .topnav-brand svg { width: 22px; height: 22px; color: var(--accent); }
+    .topnav-actions { display: flex; align-items: center; gap: 8px; }
+    .topnav-actions .btn-icon {
+      width: 32px; height: 32px;
+      display: grid; place-items: center;
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+    }
+    .topnav-actions .btn-icon:hover { background: var(--surface-warm); color: var(--fg); }
+    .topnav-actions .btn-icon svg { width: 18px; height: 18px; }
+
+    /* ─── App Layout ──────────────────────────────────────────── */
+    .app-layout {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      height: calc(100vh - var(--topnav-h));
+    }
+
+    /* ─── Sidebar ─────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--surface-warm);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard);
+    }
+    .sidebar.collapsed {
+      width: 0px;
+      border-right-color: transparent;
+    }
+    .sidebar-panel {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 16px 12px;
+    }
+    .sidebar-panel:last-of-type { border-bottom: none; flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .sidebar-panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .sidebar-panel-title h3 {
+      font-size: 11px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ─── Form controls ───────────────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .field label { font-size: 12px; color: var(--fg-2); font-weight: 400; }
+    .field input, .field select {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--fg);
+      font-size: 13px;
+      font-weight: 300;
+      transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--focus-ring);
+    }
+    .field input::placeholder { color: var(--muted); }
+    .field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' fill='%2364748d' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 10px; padding-right: 28px; }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.ok { background: var(--success); }
+    .status-dot.nok { background: var(--danger); }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+    }
+    .toggle-row label { font-size: 12px; color: var(--fg-2); margin-bottom: 0; }
+    .toggle {
+      position: relative;
+      width: 36px; height: 20px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .toggle input { display: none; }
+    .toggle .slider {
+      position: absolute; inset: 0;
+      background: var(--border);
+      border-radius: 10px;
+      transition: background var(--motion-fast) var(--ease-standard);
+    }
+    .toggle .slider::before {
+      content: '';
+      position: absolute;
+      width: 14px; height: 14px;
+      left: 3px; top: 3px;
+      background: var(--surface);
+      border-radius: 50%;
+      transition: transform var(--motion-fast) var(--ease-standard);
+    }
+    .toggle input:checked + .slider { background: var(--accent); }
+    .toggle input:checked + .slider::before { transform: translateX(16px); }
+
+    .cwd-display {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      word-break: break-all;
+      padding: 8px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    .file-list { margin-top: 4px; overflow-y: auto; flex: 1; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      border-radius: var(--radius-sm);
+      transition: background var(--motion-fast) var(--ease-standard);
+    }
+    .file-item:hover { background: var(--surface); color: var(--fg); }
+    .file-item svg { width: 14px; height: 14px; flex-shrink: 0; opacity: 0.6; }
+
+    /* ─── Buttons (sidebar) ──────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 400;
+      transition: background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+    }
+    .btn-block { width: 100%; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .btn-primary { background: var(--accent); color: var(--accent-on); border: 1px solid var(--accent); }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn-primary:active { background: var(--accent-active); }
+    .btn-secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger-soft); }
+    .btn-danger:hover { background: var(--danger-soft); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ─── Panel Toggle ────────────────────────────────────────── */
+    .panel-toggle {
+      position: absolute;
+      z-index: 15;
+      width: 28px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      box-shadow: rgba(0,0,0,0.06) 0px 2px 4px;
+      transition: all var(--motion-fast) var(--ease-standard);
+    }
+    .panel-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: var(--elev-card);
+    }
+    .panel-toggle svg { width: 16px; height: 16px; }
+    .toggle-left { left: 8px; top: 50%; transform: translateY(-50%); }
+    .toggle-right { right: 8px; top: 50%; transform: translateY(-50%); }
+
+    /* ─── Main Panel ──────────────────────────────────────────── */
+    .main-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+      position: relative;
+      min-width: 0;
+    }
+    .main-panel-body {
+      flex: 1;
+      padding: 32px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+    }
+
+    /* ─── Task Input ──────────────────────────────────────────── */
+    .task-input-wrap {
+      width: 100%;
+      max-width: 720px;
+      flex-shrink: 0;
+    }
+    .task-input-wrap textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--fg);
+      font-size: 14px;
+      font-weight: 300;
+      font-family: var(--font-mono);
+      line-height: 1.55;
+      resize: vertical;
+      transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+    }
+    .task-input-wrap textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--focus-ring);
+    }
+    .task-input-wrap textarea::placeholder { color: var(--muted); }
+    .run-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .run-btn {
+      padding: 9px 22px;
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-sm);
+      color: var(--accent-on);
+      font-size: 14px;
+      font-weight: 400;
+      transition: background var(--motion-fast) var(--ease-standard);
+    }
+    .run-btn:hover { background: var(--accent-hover); }
+    .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .run-bar .key-hint {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ─── Output Area ─────────────────────────────────────────── */
+    .output-area {
+      flex: 1;
+      width: 100%;
+      max-width: 720px;
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      min-height: 0;
+    }
+    .output-area:not(.show) { display: none; }
+    .output-meta {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 12px;
+      flex-shrink: 0;
+      background: var(--surface-warm);
+    }
+    .output-meta .meta-label { color: var(--muted); }
+    .output-body {
+      flex: 1;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      color: var(--fg);
+    }
+    .output-body .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--muted);
+      gap: 8px;
+    }
+    .output-body .empty-state svg { width: 36px; height: 36px; opacity: 0.3; }
+    .output-body .empty-state p { font-size: 13px; font-family: var(--font-body); }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 400;
+      font-family: var(--font-mono);
+    }
+    .tag.success { background: var(--success-soft); color: var(--success-text); border: 1px solid rgba(21,190,83,0.4); }
+    .tag.fail    { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(234,34,97,0.3); }
+    .tag.running { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--border); }
+    .tag.warn    { background: var(--warn-soft); color: var(--warn); border: 1px solid rgba(155,104,41,0.3); }
+
+    .exchanges {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .exchanges-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--accent);
+      cursor: pointer;
+      font-family: var(--font-body);
+      padding: 4px 0;
+      transition: color var(--motion-fast) var(--ease-standard);
+    }
+    .exchanges-toggle:hover { color: var(--accent-hover); }
+    .exchanges-toggle svg { width: 14px; height: 14px; transition: transform var(--motion-fast) var(--ease-standard); }
+    .exchanges-toggle.open svg { transform: rotate(90deg); }
+    .exchanges-body { display: none; margin-top: 8px; }
+    .exchanges-body.open { display: block; }
+    .exchange-entry {
+      margin-bottom: 6px;
+      padding: 8px 10px;
+      background: var(--surface-warm);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .exchange-entry .role {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+    .exchange-entry .content {
+      font-size: 12px;
+      color: var(--fg-2);
+      line-height: 1.5;
+    }
+
+    /* ─── Right Panel ─────────────────────────────────────────── */
+    .right-panel {
+      width: var(--rightpanel-w);
+      border-left: 1px solid var(--border);
+      background: var(--surface-warm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard);
+    }
+    .right-panel.collapsed {
+      width: 0px;
+      border-left-color: transparent;
+    }
+    .right-panel .panel-section {
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .right-panel .panel-section:last-child { border-bottom: none; flex: 1; overflow: hidden; }
+    .panel-section-header {
+      padding: 14px 16px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .panel-section-header h3 {
+      font-size: 11px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+    .panel-section-body {
+      padding: 0 16px 12px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .history-item {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+    }
+    .history-item:hover { border-color: var(--accent); box-shadow: var(--elev-card); }
+    .history-item .hi-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .history-item .hi-status {
+      font-size: 10px;
+      font-family: var(--font-mono);
+    }
+    .history-item .hi-task {
+      font-size: 12px;
+      color: var(--fg-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .history-item .hi-time {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+    .history-item .hi-tag {
+      display: inline-flex;
+      padding: 1px 6px;
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      font-weight: 400;
+      font-family: var(--font-mono);
+    }
+    .history-item .hi-tag.success { background: var(--success-soft); color: var(--success-text); }
+    .history-item .hi-tag.fail { background: var(--danger-soft); color: var(--danger); }
+    .history-empty {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .chain-item {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      margin-bottom: 6px;
+    }
+    .chain-item .ci-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .chain-item .ci-type {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 1px 6px;
+      border-radius: var(--radius-sm);
+      background: var(--accent-soft);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .chain-item .ci-action {
+      font-size: 11px;
+      color: var(--fg-2);
+    }
+    .chain-item .ci-detail {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      line-height: 1.4;
+      margin-top: 4px;
+      padding: 6px 8px;
+      background: var(--surface-warm);
+      border-radius: var(--radius-sm);
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .chain-empty {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    /* ─── Toast ───────────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: var(--toast-text);
+      opacity: 0;
+      transition: opacity var(--motion-base) var(--ease-standard);
+      z-index: 100;
+      pointer-events: none;
+      box-shadow: var(--elev-raised);
+    }
+    .toast.show { opacity: 1; }
+    .toast.success { background: var(--success-text); }
+    .toast.error { background: var(--danger); }
+
+    /* ─── Modal ───────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 600px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: var(--elev-raised);
+    }
+    .modal-header {
+      padding: 20px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h2 { font-size: 18px; font-weight: 300; }
+    .modal-close {
+      width: 28px; height: 28px;
+      display: grid; place-items: center;
+      color: var(--muted);
+      border-radius: var(--radius-sm);
+      font-size: 18px;
+      transition: background var(--motion-fast) var(--ease-standard);
+    }
+    .modal-close:hover { background: var(--surface-warm); color: var(--fg); }
+    .modal-body { padding: 16px 24px 24px; }
+    .modal-section { margin-bottom: 20px; }
+    .modal-section h3 { font-size: 13px; font-weight: 400; color: var(--fg); margin-bottom: 8px; }
+    .modal-section p, .modal-section li { font-size: 13px; color: var(--fg-2); line-height: 1.6; }
+    .modal-section ul { padding-left: 18px; }
+    .modal-section li { margin-bottom: 4px; }
+    .modal-section code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--surface-warm);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      color: var(--accent);
+    }
+    .modal-section .code-block {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--surface-warm);
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--fg);
+      margin: 6px 0;
+      overflow-x: auto;
+      white-space: pre;
+      border: 1px solid var(--border);
+    }
+    .modal-footer { padding: 0 24px 20px; display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* ─── Scrollbar ───────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ─── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .right-panel:not(.collapsed) { display: flex; }
+      .right-panel { width: 260px; }
+    }
+    @media (max-width: 720px) {
+      .sidebar:not(.collapsed) { display: flex; }
+      .sidebar { width: 220px; }
+      .main-panel-body { padding: 20px 20px; }
+    }
+  </style>
 </head>
 <body>
 
 <div class="modal-overlay" id="guideModal">
   <div class="modal">
     <div class="modal-header">
-      <h2>User Guide</h2>
+      <h2>用户指南</h2>
       <button class="modal-close" onclick="closeGuide()">&times;</button>
     </div>
     <div class="modal-body">
       <div class="modal-section">
-        <h3>What is code-harness?</h3>
-        <p>A lightweight Coding Agent Harness with a feedback-loop-driven main loop. It reads your task, calls an LLM, executes actions (read/write files, run commands), and adapts based on verification results.</p>
+        <h3>什么是 code-harness？</h3>
+        <p>一个轻量级 Coding Agent Harness，通过反馈循环驱动主循环。它读取你的任务，调用 LLM，执行动作（读/写文件、运行命令），并根据验证结果自适应调整。</p>
       </div>
       <div class="modal-section">
-        <h3>Using the WebUI</h3>
+        <h3>使用工作台</h3>
         <ul>
-          <li>Configure your <strong>LLM provider</strong>, <strong>API base URL</strong>, and <strong>model</strong> in the sidebar</li>
-          <li>Set your <strong>API Key</strong> via the sidebar (stored securely in OS keychain)</li>
-          <li>Type a task and click <strong>Run Task</strong></li>
-          <li>Toggle <strong>Show process logs</strong> to see the agent's reasoning</li>
+          <li>在左侧边栏配置 <strong>LLM Provider</strong>、<strong>API Base URL</strong> 和 <strong>Model</strong></li>
+          <li>通过侧边栏设置 <strong>API Key</strong>（存储在浏览器中）</li>
+          <li>在输入框中输入任务</li>
+          <li>点击 <strong>Run Task</strong> 或按 <strong>Ctrl+Enter</strong> 执行</li>
+          <li>开启 <strong>Process Logs</strong> 查看 Agent 的推理过程</li>
         </ul>
       </div>
       <div class="modal-section">
-        <h3>Working with Local Files (Docker)</h3>
-        <p>To give the WebUI access to your local files, run with Docker volume mount:</p>
+        <h3>Docker 本地文件访问</h3>
         <div class="code-block">docker run -v $(pwd):/workspace -w /workspace -p 3000:3000 code-harness</div>
-        <p>This mounts your current directory into <code>/workspace</code> inside the container. The agent can read, write, and modify files in this directory.</p>
+        <p>将当前目录挂载到容器内的 <code>/workspace</code>，Agent 可以读写该目录中的文件。</p>
       </div>
       <div class="modal-section">
-        <h3>Using the CLI (Direct Access)</h3>
-        <p>Clone the repository to use the CLI directly on your local files:</p>
+        <h3>CLI 直接使用</h3>
         <div class="code-block">git clone https://github.com/kasumizawa-miyuu/code-harness.git
 cd code-harness
 npm install
@@ -152,95 +790,147 @@ npm link
 harness configure
 harness key update
 harness run "your task"</div>
-        <p>CLI works directly on your local filesystem — no Docker needed.</p>
       </div>
       <div class="modal-section">
-        <h3>Remote Deployment</h3>
-        <p>When deployed remotely (Render, etc.), the WebUI operates on the server's filesystem. Use Docker with volume mounts to connect your local files.</p>
-      </div>
-      <div class="modal-section">
-        <h3>Project Repository</h3>
-        <p><a href="https://github.com/kasumizawa-miyuu/code-harness" target="_blank">https://github.com/kasumizawa-miyuu/code-harness</a></p>
+        <h3>项目仓库</h3>
+        <p><a href="https://github.com/kasumizawa-miyuu/code-harness" target="_blank">github.com/kasumizawa-miyuu/code-harness</a></p>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn" onclick="dismissGuide()">Got it</button>
+      <button class="btn btn-primary" onclick="dismissGuide()">知道了</button>
     </div>
   </div>
 </div>
 
-<div class="sidebar">
-  <div class="sidebar-header">
-    <h1>code-harness</h1>
-    <p>Coding Agent Harness</p>
+<header class="topnav" data-od-id="topnav">
+  <div class="topnav-brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <span>code-harness</span>
   </div>
-  <div class="sidebar-section">
-    <h2>Configuration</h2>
-    <label for="llmProvider">LLM Provider</label>
-    <select id="llmProvider" onchange="onProviderChange()">
-      <option value="openai">OpenAI</option>
-      <option value="deepseek">DeepSeek</option>
-      <option value="groq">Groq</option>
-      <option value="together">Together AI</option>
-      <option value="openrouter">OpenRouter</option>
-      <option value="ollama">Ollama (local)</option>
-      <option value="custom">Custom</option>
-    </select>
-    <label for="baseUrl">API Base URL</label>
-    <input id="baseUrl" type="text" placeholder="https://api.openai.com/v1">
-    <label for="model">Model</label>
-    <input id="model" type="text" placeholder="gpt-4o">
-    <label for="maxRetries">Max Retries</label>
-    <input id="maxRetries" type="number" min="0" max="10" step="1" placeholder="3">
-    <button class="btn primary btn-block" onclick="saveConfig()">Save Settings</button>
-    <div class="toggle-row">
-      <label for="verbose" style="font-size:13px;font-weight:500">Show process logs</label>
-      <label class="toggle" style="width:44px;height:24px">
-        <input id="verbose" type="checkbox">
-        <span class="slider" style="border-radius:12px"></span>
-      </label>
-    </div>
-    <style>
-    .toggle:has(input:checked) .slider::before { transform: translateX(20px); }
-    .toggle .slider::before { width:18px; height:18px; left:2px; top:2px; }
-    </style>
+  <div class="topnav-actions">
+    <button class="btn-icon" onclick="toggleTheme()" title="切换主题">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+    <button class="btn btn-secondary btn-sm" onclick="openGuide()">用户指南</button>
   </div>
-  <div class="sidebar-section">
-    <h2>API Key</h2>
-    <div class="status-indicator">
-      <span class="status-dot" id="keyDot"></span>
-      <span id="keyStatus">Checking...</span>
-    </div>
-    <button class="btn btn-block" onclick="updateKey()">Set / Update Key</button>
-    <button class="btn danger btn-block" onclick="clearKey()">Clear Key</button>
-  </div>
-  <div class="sidebar-section">
-    <h2>Environment</h2>
-    <div class="cwd-display" id="cwdDisplay">Loading...</div>
-    <div id="fileList" class="file-list"></div>
-  </div>
-</div>
+</header>
 
-<div class="main">
-  <div class="main-header">
-    <h2>Task Runner</h2>
-    <button class="btn small" onclick="openGuide()">User Guide</button>
-  </div>
-  <div class="main-content">
-    <textarea id="taskInput" placeholder="Enter a task description...&#10;&#10;Examples:&#10;  List all files in the current directory&#10;  Run npm test and fix any failures&#10;  Add error handling to all .ts files"></textarea>
-    <div class="run-bar">
-      <button class="run-btn" id="runBtn" onclick="runTask()">Run Task</button>
-    </div>
-    <div class="output-area" id="outputArea">
-      <div class="output-meta" id="outputMeta"></div>
-      <div class="output-body" id="outputBody">
-        <div class="empty-state" id="emptyState">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-          <p>Run a task to see output here</p>
-        </div>
+<div class="app-layout">
+
+  <aside class="sidebar" data-od-id="sidebar">
+
+    <div class="sidebar-panel">
+      <div class="sidebar-panel-title">
+        <h3>LLM 配置</h3>
+      </div>
+      <div class="field">
+        <label for="llmProvider">Provider</label>
+        <select id="llmProvider" onchange="onProviderChange()">
+          <option value="openai">OpenAI</option>
+          <option value="deepseek">DeepSeek</option>
+          <option value="groq">Groq</option>
+          <option value="together">Together AI</option>
+          <option value="openrouter">OpenRouter</option>
+          <option value="ollama">Ollama (local)</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="baseUrl">API Base URL</label>
+        <input id="baseUrl" type="text" placeholder="https://api.openai.com/v1">
+      </div>
+      <div class="field">
+        <label for="model">Model</label>
+        <input id="model" type="text" placeholder="gpt-4o">
+      </div>
+      <div class="field">
+        <label for="maxRetries">Max Retries</label>
+        <input id="maxRetries" type="number" min="0" max="10" step="1" placeholder="3">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="saveConfig()">保存设置</button>
+      <div class="toggle-row" style="margin-top: 10px;">
+        <label for="verbose">Process Logs</label>
+        <label class="toggle">
+          <input id="verbose" type="checkbox">
+          <span class="slider"></span>
+        </label>
       </div>
     </div>
-  </div>
+
+    <div class="sidebar-panel">
+      <div class="sidebar-panel-title">
+        <h3>API Key</h3>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot" id="keyDot"></span>
+        <span id="keyStatus">检查中...</span>
+      </div>
+      <button class="btn btn-secondary btn-block" onclick="updateKey()" style="margin-bottom:6px;">设置 Key</button>
+      <button class="btn btn-danger btn-block" onclick="clearKey()">清除 Key</button>
+    </div>
+
+    <div class="sidebar-panel">
+      <div class="sidebar-panel-title">
+        <h3>工作目录</h3>
+      </div>
+      <div class="cwd-display" id="cwdDisplay">加载中...</div>
+    </div>
+
+  </aside>
+
+  <main class="main-panel" data-od-id="main-panel">
+    <div class="panel-toggle toggle-left" onclick="toggleSidebar()" title="切换侧边栏" id="toggleLeft">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <div class="panel-toggle toggle-right" onclick="toggleRightPanel()" title="切换右侧面板" id="toggleRight">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+    <div class="main-panel-body">
+
+      <div class="task-input-wrap">
+        <textarea id="taskInput" placeholder="输入任务描述...&#10;&#10;示例：&#10;  List all files in the current directory&#10;  Run npm test and fix any failures&#10;  Add error handling to all .ts files"></textarea>
+        <div class="run-bar">
+          <button class="run-btn" id="runBtn" onclick="runTask()">Run Task</button>
+          <span class="key-hint">Ctrl+Enter</span>
+        </div>
+      </div>
+
+      <div class="output-area" id="outputArea">
+        <div class="output-meta" id="outputMeta"></div>
+        <div class="output-body" id="outputBody">
+          <div class="empty-state" id="emptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            <p>运行任务后，输出将显示在此处</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <aside class="right-panel" data-od-id="right-panel">
+
+    <div class="panel-section" style="max-height: 40%;">
+      <div class="panel-section-header">
+        <h3>执行历史</h3>
+        <button class="btn btn-sm btn-secondary" onclick="clearHistory()" style="font-size:10px;padding:2px 8px;">清除</button>
+      </div>
+      <div class="panel-section-body" id="historyList">
+        <div class="history-empty">暂无执行记录</div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-header">
+        <h3>Agent 推理过程</h3>
+      </div>
+      <div class="panel-section-body" id="chainList">
+        <div class="chain-empty">运行任务后，Agent 的思考步骤将显示在此处</div>
+      </div>
+    </div>
+
+  </aside>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -249,22 +939,27 @@ harness run "your task"</div>
 const GUIDE_DISMISSED = 'code-harness-guide-dismissed'
 const CONFIG_KEY = 'code-harness-config'
 const API_KEY_KEY = 'code-harness-api-key'
+const HISTORY_KEY = 'code-harness-history'
+const THEME_KEY = 'code-harness-theme'
 
 function getStoredConfig() {
   try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {} } catch { return {} }
 }
-
 function getStoredApiKey() {
   return localStorage.getItem(API_KEY_KEY) || ''
 }
-
+function getStoredHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [] } catch { return [] }
+}
 function saveConfigToLS(config) {
   const existing = getStoredConfig()
   localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...existing, ...config }))
 }
-
 function saveApiKeyToLS(key) {
   localStorage.setItem(API_KEY_KEY, key)
+}
+function saveHistory(history) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 50)))
 }
 
 async function api(url, opts = {}) {
@@ -275,33 +970,31 @@ async function api(url, opts = {}) {
   return res.json()
 }
 
-function showToast(msg, type = 'success') {
+function showToast(msg, type) {
   const t = document.getElementById('toast')
   t.textContent = msg
-  t.className = `toast ${type} show`
+  t.className = 'toast ' + (type || 'success') + ' show'
   setTimeout(() => t.classList.remove('show'), 3000)
 }
 
 function openGuide() {
-  document.getElementById('guideModal').className = 'modal-overlay show'
+  document.getElementById('guideModal').classList.add('show')
 }
-
 function closeGuide() {
-  document.getElementById('guideModal').className = 'modal-overlay'
+  document.getElementById('guideModal').classList.remove('show')
 }
-
 function dismissGuide() {
   localStorage.setItem(GUIDE_DISMISSED, 'true')
   closeGuide()
 }
 
 const PROVIDER_DEFAULTS = {
-  openai:   { baseUrl: 'https://api.openai.com/v1',           model: 'gpt-4o' },
-  deepseek: { baseUrl: 'https://api.deepseek.com/v1',         model: 'deepseek-chat' },
-  groq:     { baseUrl: 'https://api.groq.com/openai/v1',      model: 'llama-3.3-70b-versatile' },
-  together: { baseUrl: 'https://api.together.xyz/v1',          model: 'mistralai/Mixtral-8x7B-Instruct-v0.1' },
+  openai:    { baseUrl: 'https://api.openai.com/v1',           model: 'gpt-4o' },
+  deepseek:  { baseUrl: 'https://api.deepseek.com/v1',         model: 'deepseek-chat' },
+  groq:      { baseUrl: 'https://api.groq.com/openai/v1',      model: 'llama-3.3-70b-versatile' },
+  together:  { baseUrl: 'https://api.together.xyz/v1',         model: 'mistralai/Mixtral-8x7B-Instruct-v0.1' },
   openrouter:{ baseUrl: 'https://openrouter.ai/api/v1',        model: 'openai/gpt-4o' },
-  ollama:   { baseUrl: 'http://localhost:11434/v1',           model: 'llama3.2' },
+  ollama:    { baseUrl: 'http://localhost:11434/v1',           model: 'llama3.2' },
 }
 
 function onProviderChange() {
@@ -313,7 +1006,7 @@ function onProviderChange() {
   }
 }
 
-async function loadConfig() {
+function loadConfig() {
   const stored = getStoredConfig()
   const provider = stored.llmProvider || 'openai'
   document.getElementById('llmProvider').value = provider
@@ -323,25 +1016,29 @@ async function loadConfig() {
   document.getElementById('verbose').checked = stored.verbose === true
 }
 
-async function loadKeyStatus() {
+function loadKeyStatus() {
   const key = getStoredApiKey()
   const dot = document.getElementById('keyDot')
   const text = document.getElementById('keyStatus')
   if (key) {
     dot.className = 'status-dot ok'
-    text.textContent = 'Configured (browser)'
+    text.textContent = '已配置'
   } else {
     dot.className = 'status-dot nok'
-    text.textContent = 'Not configured'
+    text.textContent = '未配置'
   }
 }
 
 async function loadCwd() {
-  const data = await api('/api/cwd')
-  document.getElementById('cwdDisplay').textContent = data.cwd
+  try {
+    const data = await api('/api/cwd')
+    document.getElementById('cwdDisplay').textContent = data.cwd
+  } catch (e) {
+    document.getElementById('cwdDisplay').textContent = '无法获取工作目录'
+  }
 }
 
-async function saveConfig() {
+function saveConfig() {
   const provider = document.getElementById('llmProvider').value
   const config = {
     llmProvider: provider,
@@ -351,23 +1048,121 @@ async function saveConfig() {
     verbose: document.getElementById('verbose').checked,
   }
   saveConfigToLS(config)
-  showToast('Settings saved to browser')
+  showToast('设置已保存')
 }
 
-async function updateKey() {
-  const key = prompt('Enter API Key:')
+function updateKey() {
+  const key = prompt('输入 API Key：')
   if (!key) return
   saveApiKeyToLS(key)
-  await loadKeyStatus()
-  showToast('API Key saved to browser')
+  loadKeyStatus()
+  showToast('API Key 已保存')
 }
 
-async function clearKey() {
-  if (!confirm('Clear API Key from browser?')) return
+function clearKey() {
+  if (!confirm('确定清除 API Key 吗？')) return
   localStorage.removeItem(API_KEY_KEY)
-  await loadKeyStatus()
-  showToast('API Key cleared')
+  loadKeyStatus()
+  showToast('API Key 已清除')
 }
+
+function renderHistory() {
+  const list = document.getElementById('historyList')
+  const history = getStoredHistory()
+  if (!history.length) {
+    list.innerHTML = '<div class="history-empty">暂无执行记录</div>'
+    return
+  }
+  list.innerHTML = history.map((item, i) => `
+    <div class="history-item" onclick="restoreHistory(${i})">
+      <div class="hi-top">
+        <span class="hi-tag ${item.success ? 'success' : 'fail'}">${item.success ? '成功' : '失败'}</span>
+        <span class="hi-time">${item.time}</span>
+      </div>
+      <div class="hi-task">${item.task}</div>
+    </div>
+  `).join('')
+}
+
+function restoreHistory(idx) {
+  const history = getStoredHistory()
+  const item = history[idx]
+  if (!item) return
+  const area = document.getElementById('outputArea')
+  const meta = document.getElementById('outputMeta')
+  const body = document.getElementById('outputBody')
+  const empty = document.getElementById('emptyState')
+  area.classList.add('show')
+  empty.style.display = 'none'
+  const statusClass = item.success ? 'success' : 'fail'
+  meta.innerHTML = '<span class="tag ' + statusClass + '">' + item.status + '</span><span class="meta-label">Retries: ' + item.retries + '</span>'
+  body.innerHTML = '<div>' + (item.output || '(无输出)') + '</div>'
+  if (item.exchanges) {
+    body.innerHTML += '<div class="exchanges"><div class="exchanges-toggle" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg> Process Logs</div><div class="exchanges-body">' + item.exchanges.split('\n---\n').map(function(e) { return '<div class="exchange-entry"><div class="content">' + escapeHtml(e) + '</div></div>' }).join('') + '</div></div>'
+  }
+  document.getElementById('taskInput').value = item.task
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div')
+  div.appendChild(document.createTextNode(str))
+  return div.innerHTML
+}
+
+function addChainEntry(type, action, detail) {
+  const list = document.getElementById('chainList')
+  const empty = list.querySelector('.chain-empty')
+  if (empty) empty.remove()
+  const div = document.createElement('div')
+  div.className = 'chain-item'
+  div.innerHTML = '<div class="ci-header"><span class="ci-type">' + type + '</span><span class="ci-action">' + escapeHtml(action) + '</span></div><div class="ci-detail">' + escapeHtml(detail) + '</div>'
+  list.appendChild(div)
+  list.scrollTop = list.scrollHeight
+}
+
+function clearHistory() {
+  if (!confirm('确定清除所有执行历史吗？')) return
+  localStorage.removeItem(HISTORY_KEY)
+  renderHistory()
+  showToast('历史已清除')
+}
+
+function toggleTheme() {
+  const root = document.documentElement
+  const current = root.getAttribute('data-theme')
+  if (current === 'dark') {
+    root.removeAttribute('data-theme')
+    localStorage.setItem(THEME_KEY, 'light')
+  } else {
+    root.setAttribute('data-theme', 'dark')
+    localStorage.setItem(THEME_KEY, 'dark')
+  }
+  applyTheme()
+}
+
+function applyTheme() {
+  const root = document.documentElement
+  const stored = localStorage.getItem(THEME_KEY)
+  if (stored === 'dark') {
+    root.setAttribute('data-theme', 'dark')
+  } else if (stored === 'light') {
+    root.removeAttribute('data-theme')
+  } else {
+    // follow system
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      root.setAttribute('data-theme', 'dark')
+    } else {
+      root.removeAttribute('data-theme')
+    }
+  }
+}
+
+// Listen for system theme changes when no manual override
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+  if (!localStorage.getItem(THEME_KEY)) {
+    applyTheme()
+  }
+})
 
 async function runTask() {
   const task = document.getElementById('taskInput').value.trim()
@@ -378,13 +1173,15 @@ async function runTask() {
   const meta = document.getElementById('outputMeta')
   const body = document.getElementById('outputBody')
   const empty = document.getElementById('emptyState')
+  const chainList = document.getElementById('chainList')
 
   btn.disabled = true
   btn.textContent = 'Running...'
-  area.className = 'output-area show'
+  area.classList.add('show')
   empty.style.display = 'none'
-  meta.innerHTML = '<span class="tag info">Running...</span>'
+  meta.innerHTML = '<span class="tag running">Running...</span>'
   body.innerHTML = ''
+  chainList.innerHTML = '<div class="chain-empty">运行任务后，Agent 的思考步骤将显示在此处</div>'
 
   const stored = getStoredConfig()
   const apiKey = getStoredApiKey()
@@ -407,29 +1204,102 @@ async function runTask() {
 
     if (data.status === 'no_key') {
       meta.innerHTML = '<span class="tag fail">Error</span>'
-      body.innerHTML = `<div>${data.message}</div>`
+      body.innerHTML = '<div>' + (data.message || '') + '</div>'
     } else {
       const statusClass = data.success ? 'success' : 'fail'
-      meta.innerHTML = `<span class="tag ${statusClass}">${data.status}</span><span style="color:var(--text-secondary)">Retries: ${data.retries}</span>`
-      let html = `<div>${data.output || '(no output)'}</div>`
+      meta.innerHTML = '<span class="tag ' + statusClass + '">' + (data.status || '') + '</span><span class="meta-label">Retries: ' + (data.retries ?? 0) + '</span>'
+      let html = '<div>' + (data.output || '(无输出)') + '</div>'
       if (data.exchanges) {
-        html += `<div class="exchanges"><h3>Process Log</h3>${data.exchanges.split('\n---\n').map(e => `<div class="exchange-entry"><div class="content">${e}</div></div>`).join('')}</div>`
+        html += '<div class="exchanges"><div class="exchanges-toggle" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg> Process Logs</div><div class="exchanges-body">' + data.exchanges.split('\n---\n').map(function(e) { return '<div class="exchange-entry"><div class="content">' + escapeHtml(e) + '</div></div>' }).join('') + '</div></div>'
       }
       body.innerHTML = html
+
+      // Add to history
+      const history = getStoredHistory()
+      history.unshift({
+        task: task,
+        success: data.success,
+        status: data.status,
+        retries: data.retries,
+        output: data.output,
+        exchanges: data.exchanges,
+        time: new Date().toLocaleTimeString('zh-CN'),
+      })
+      saveHistory(history)
+      renderHistory()
     }
   } catch (err) {
     meta.innerHTML = '<span class="tag fail">Error</span>'
-    body.innerHTML = `<div>${err.message}</div>`
+    body.innerHTML = '<div>' + err.message + '</div>'
   }
 
   btn.disabled = false
   btn.textContent = 'Run Task'
 }
 
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key === 'Enter') {
+    runTask()
+  }
+})
+
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar')
+  const btn = document.getElementById('toggleLeft')
+  sidebar.classList.toggle('collapsed')
+  const collapsed = sidebar.classList.contains('collapsed')
+  btn.innerHTML = collapsed
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>'
+  localStorage.setItem('code-harness-sidebar', collapsed ? 'collapsed' : '')
+}
+
+function toggleRightPanel() {
+  const panel = document.querySelector('.right-panel')
+  const btn = document.getElementById('toggleRight')
+  panel.classList.toggle('collapsed')
+  const collapsed = panel.classList.contains('collapsed')
+  btn.innerHTML = collapsed
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>'
+  localStorage.setItem('code-harness-rightpanel', collapsed ? 'collapsed' : '')
+}
+
+function updateTextareaMaxHeight() {
+  const body = document.querySelector('.main-panel-body')
+  const textarea = document.getElementById('taskInput')
+  const runBar = document.querySelector('.run-bar')
+  if (!body || !textarea || !runBar) return
+
+  const bodyStyle = getComputedStyle(body)
+  const padY = parseFloat(bodyStyle.paddingTop) + parseFloat(bodyStyle.paddingBottom)
+  const runBarH = runBar.offsetHeight + 12
+  const gap = 32
+
+  const maxH = Math.max(160, body.clientHeight - padY - runBarH - gap * 2)
+  textarea.style.maxHeight = maxH + 'px'
+}
+
+window.addEventListener('resize', updateTextareaMaxHeight)
+
+// Restore sidebar/panel state
+if (localStorage.getItem('code-harness-sidebar') === 'collapsed') {
+  document.querySelector('.sidebar').classList.add('collapsed')
+  document.getElementById('toggleLeft').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>'
+}
+if (localStorage.getItem('code-harness-rightpanel') === 'collapsed') {
+  document.querySelector('.right-panel').classList.add('collapsed')
+  document.getElementById('toggleRight').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>'
+}
+
+applyTheme()
 loadConfig()
 loadKeyStatus()
 loadCwd()
+renderHistory()
+updateTextareaMaxHeight()
 if (!localStorage.getItem(GUIDE_DISMISSED)) { openGuide() }
 </script>
+
 </body>
 </html>
