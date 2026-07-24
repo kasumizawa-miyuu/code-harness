@@ -82,6 +82,7 @@ describe('WorkspaceManager', () => {
     expect(dirNode!.children).toHaveLength(1)
     expect(dirNode!.children![0].name).toBe('file2.txt')
     expect(dirNode!.children![0].type).toBe('file')
+    expect(dirNode!.children![0].path).toBe('file2.txt')
   })
 
   it('should create downloadable zip with modified content', async () => {

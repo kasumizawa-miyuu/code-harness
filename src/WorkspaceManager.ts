@@ -79,7 +79,7 @@ export function createWorkspaceManager(options?: { baseDir?: string }): Workspac
 
     for (const entry of entries) {
       const fullPath = join(dir, entry.name)
-      const relPath = relative(baseDir, fullPath).replace(/\\/g, '/')
+      const relPath = relative(dir, fullPath).replace(/\\/g, '/')
       if (entry.isDirectory()) {
         nodes.push({
           name: entry.name,
@@ -116,7 +116,7 @@ export function createWorkspaceManager(options?: { baseDir?: string }): Workspac
       if (entry.isDirectory()) {
         addDirToZip(zip, fullPath, baseDir)
       } else {
-        const relPath = relative(baseDir, fullPath).replace(/\\/g, '/')
+const relPath = relative(dir, fullPath).replace(/\\/g, '/')
         zip.addFile(relPath, readFileSync(fullPath))
       }
     }
