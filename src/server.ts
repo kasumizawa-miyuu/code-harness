@@ -63,6 +63,14 @@ app.post('/api/run', async (req, res) => {
       return res.json({ status: 'no_key', message: 'No API Key configured. Enter your API key in the sidebar.' })
     }
 
+    if (cloudMode && currentSessionId) {
+      const session = wsManager.getSession(currentSessionId)
+      if (session) {
+        config.workDir = session.rootDir
+        config.allowedPaths = [session.rootDir]
+      }
+    }
+
     const loop = createAgentLoop(config, await createLLMProvider(config))
     const result = await loop.run(task)
 
