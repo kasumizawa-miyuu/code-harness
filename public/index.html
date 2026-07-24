@@ -740,6 +740,112 @@
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
+    /* ─── Workspace Overlay ──────────────────────────────────── */
+    .ws-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 60;
+      align-items: center;
+      justify-content: center;
+    }
+    .ws-overlay.show { display: flex; }
+    .ws-overlay .modal { width: 500px; text-align: center; }
+    .ws-overlay .modal-body { padding: 32px 24px; }
+    .ws-overlay h2 { font-size: 20px; font-weight: 300; margin-bottom: 8px; }
+    .ws-overlay p { font-size: 13px; color: var(--fg-2); margin-bottom: 24px; }
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px 20px;
+      cursor: pointer;
+      transition: border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
+      background: var(--surface-warm);
+    }
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .dropzone svg { width: 48px; height: 48px; color: var(--muted); margin: 0 auto 12px; }
+    .dropzone p { font-size: 14px; color: var(--fg-2); margin-bottom: 4px; }
+    .dropzone .hint { font-size: 12px; color: var(--muted); }
+    .dropzone input[type="file"] { display: none; }
+    .ws-progress { display: none; margin-top: 16px; }
+    .ws-progress.show { display: block; }
+    .ws-progress-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .ws-progress-bar .fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+    .ws-progress .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      font-family: var(--font-mono);
+    }
+
+    /* ─── Workspace Bar ───────────────────────────────────────── */
+    .ws-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      background: var(--surface-warm);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .ws-bar.show { display: flex; }
+    .ws-bar .ws-icon {
+      width: 16px; height: 16px;
+      color: var(--success);
+      flex-shrink: 0;
+    }
+    .ws-bar .ws-path {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .ws-bar .ws-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    /* ─── File Tree in Modal ──────────────────────────────────── */
+    .ws-file-tree {
+      text-align: left;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: var(--surface-warm);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .ws-file-tree .ft-node {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding-left: calc(var(--depth, 0) * 16px);
+    }
+    .ws-file-tree .ft-node svg { width: 14px; height: 14px; flex-shrink: 0; opacity: 0.6; }
+    .ws-file-tree .ft-node .ft-name { color: var(--fg-2); }
+    .ws-file-tree .ft-node .ft-dir { color: var(--accent); }
+
     /* ─── Responsive ──────────────────────────────────────────── */
     @media (max-width: 1100px) {
       .right-panel:not(.collapsed) { display: flex; }
@@ -802,6 +908,29 @@ harness run "your task"</div>
   </div>
 </div>
 
+<div class="ws-overlay" id="wsOverlay">
+  <div class="modal">
+    <div class="modal-body">
+      <h2>上传工作区</h2>
+      <p>上传一个包含项目文件的 zip 压缩包，Agent 将在该工作区中执行任务。</p>
+      <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p>拖拽 zip 文件到此处，或点击选择文件</p>
+        <span class="hint">支持 .zip 格式，最大 100MB</span>
+        <input type="file" id="fileInput" accept=".zip" onchange="handleFileSelect(event)">
+      </div>
+      <div class="ws-progress" id="wsProgress">
+        <div class="ws-progress-bar"><div class="fill" id="wsProgressFill"></div></div>
+        <div class="label" id="wsProgressLabel">上传中...</div>
+      </div>
+      <div class="ws-file-tree" id="wsFileTree" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="wsOverlayClose" onclick="hideWorkspaceOverlay()" style="display:none">开始使用</button>
+    </div>
+  </div>
+</div>
+
 <header class="topnav" data-od-id="topnav">
   <div class="topnav-brand">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
@@ -814,6 +943,15 @@ harness run "your task"</div>
     <button class="btn btn-secondary btn-sm" onclick="openGuide()">用户指南</button>
   </div>
 </header>
+
+<div class="ws-bar" id="wsBar">
+  <svg class="ws-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+  <span class="ws-path" id="wsPath">/workspace</span>
+  <div class="ws-actions">
+    <button class="btn btn-sm btn-secondary" onclick="downloadWorkspace()">下载</button>
+    <button class="btn btn-sm btn-secondary" onclick="switchWorkspace()">切换</button>
+  </div>
+</div>
 
 <div class="app-layout">
 
@@ -1237,6 +1375,149 @@ async function runTask() {
   btn.textContent = 'Run Task'
 }
 
+/* ─── Workspace Functions ──────────────────────────────── */
+async function checkWorkspaceStatus() {
+  try {
+    const data = await api('/api/workspace/status')
+    if (data.hasWorkspace) {
+      document.getElementById('wsOverlay').classList.remove('show')
+      document.getElementById('wsBar').classList.add('show')
+      document.getElementById('wsPath').textContent = data.rootDir
+      renderFileTree(data.fileTree)
+    } else {
+      document.getElementById('wsOverlay').classList.add('show')
+      document.getElementById('wsBar').classList.remove('show')
+    }
+  } catch (e) {
+    // Server not available or no workspace endpoints, skip
+  }
+}
+
+function handleDrop(e) {
+  e.preventDefault()
+  document.getElementById('dropzone').classList.remove('drag-over')
+  const file = e.dataTransfer.files[0]
+  if (file) uploadWorkspace(file)
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0]
+  if (file) uploadWorkspace(file)
+}
+
+async function uploadWorkspace(file) {
+  const progress = document.getElementById('wsProgress')
+  const fill = document.getElementById('wsProgressFill')
+  const label = document.getElementById('wsProgressLabel')
+  const closeBtn = document.getElementById('wsOverlayClose')
+
+  progress.classList.add('show')
+  fill.style.width = '0%'
+  label.textContent = '读取文件中...'
+  closeBtn.style.display = 'none'
+
+  // Simulate progress for UI feedback
+  fill.style.width = '30%'
+
+  const reader = new FileReader()
+  reader.onload = async function() {
+    fill.style.width = '60%'
+    label.textContent = '上传中...'
+
+    try {
+      const base64 = reader.result.split(',')[1]
+      const data = await api('/api/workspace/upload', {
+        method: 'POST',
+        body: JSON.stringify({ zipBase64: base64 }),
+      })
+
+      fill.style.width = '100%'
+      label.textContent = '上传完成！'
+
+      document.getElementById('wsOverlay').classList.remove('show')
+      document.getElementById('wsBar').classList.add('show')
+      document.getElementById('wsPath').textContent = data.rootDir
+      renderFileTree(data.fileTree)
+
+      showToast('工作区已上传 (' + data.files.length + ' 个文件)')
+    } catch (err) {
+      label.textContent = '上传失败: ' + err.message
+      fill.style.width = '0%'
+      progress.classList.remove('show')
+      showToast('上传失败', 'error')
+    }
+  }
+  reader.readAsDataURL(file)
+}
+
+function renderFileTree(tree) {
+  const container = document.getElementById('wsFileTree')
+  if (!tree || !tree.length) {
+    container.style.display = 'none'
+    return
+  }
+  container.style.display = 'block'
+  container.innerHTML = renderTreeNodes(tree, 0)
+}
+
+function renderTreeNodes(nodes, depth) {
+  let html = ''
+  for (const node of nodes) {
+    if (node.type === 'directory') {
+      html += '<div class="ft-node" style="--depth:' + depth + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg><span class="ft-dir">' + escapeHtml(node.name) + '/</span></div>'
+      if (node.children) {
+        html += renderTreeNodes(node.children, depth + 1)
+      }
+    } else {
+      html += '<div class="ft-node" style="--depth:' + depth + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="ft-name">' + escapeHtml(node.name) + '</span></div>'
+    }
+  }
+  return html
+}
+
+async function downloadWorkspace() {
+  try {
+    const res = await fetch('/api/workspace/download')
+    if (!res.ok) throw new Error('Download failed')
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'workspace.zip'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    showToast('工作区已下载')
+  } catch (err) {
+    showToast('下载失败: ' + err.message, 'error')
+  }
+}
+
+function switchWorkspace() {
+  document.getElementById('wsBar').classList.remove('show')
+  document.getElementById('wsOverlay').classList.add('show')
+  document.getElementById('wsProgress').classList.remove('show')
+  document.getElementById('wsOverlayClose').style.display = 'none'
+}
+
+function hideWorkspaceOverlay() {
+  document.getElementById('wsOverlay').classList.remove('show')
+}
+
+// Drag-and-drop events
+document.addEventListener('DOMContentLoaded', function() {
+  const dz = document.getElementById('dropzone')
+  dz.addEventListener('dragover', function(e) {
+    e.preventDefault()
+    dz.classList.add('drag-over')
+  })
+  dz.addEventListener('dragleave', function() {
+    dz.classList.remove('drag-over')
+  })
+  dz.addEventListener('drop', handleDrop)
+})
+
 document.addEventListener('keydown', function(e) {
   if (e.ctrlKey && e.key === 'Enter') {
     runTask()
@@ -1297,6 +1578,7 @@ loadConfig()
 loadKeyStatus()
 loadCwd()
 renderHistory()
+checkWorkspaceStatus()
 updateTextareaMaxHeight()
 if (!localStorage.getItem(GUIDE_DISMISSED)) { openGuide() }
 </script>
