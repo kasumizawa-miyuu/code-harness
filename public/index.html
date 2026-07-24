@@ -794,35 +794,7 @@
       font-family: var(--font-mono);
     }
 
-    /* ─── Workspace Bar ───────────────────────────────────────── */
-    .ws-bar {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 16px;
-      background: var(--surface-warm);
-      border-bottom: 1px solid var(--border);
-      font-size: 12px;
-      flex-shrink: 0;
-    }
-    .ws-bar.show { display: flex; }
-    .ws-bar .ws-icon {
-      width: 16px; height: 16px;
-      color: var(--success);
-      flex-shrink: 0;
-    }
-    .ws-bar .ws-path {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--muted);
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .ws-bar .ws-actions { display: flex; gap: 6px; flex-shrink: 0; }
-
-    /* ─── File Tree in Modal ──────────────────────────────────── */
+    /* ─── Responsive ──────────────────────────────────────────── */
     .ws-file-tree {
       text-align: left;
       max-height: 200px;
@@ -878,8 +850,12 @@
           <li>通过侧边栏设置 <strong>API Key</strong>（存储在浏览器中）</li>
           <li>在输入框中输入任务</li>
           <li>点击 <strong>Run Task</strong> 或按 <strong>Ctrl+Enter</strong> 执行</li>
-          <li>开启 <strong>Process Logs</strong> 查看 Agent 的推理过程</li>
+          <li>开启 <strong>Process Logs</strong> 查看 Agent 的详细交换日志</li>
         </ul>
+      </div>
+      <div class="modal-section">
+        <h3>云端工作区</h3>
+        <p>部署到云端时，需要在主面板上传 zip 工作区。Agent 将在上传的工作区中执行任务，你可以下载修改后的结果。</p>
       </div>
       <div class="modal-section">
         <h3>Docker 本地文件访问</h3>
@@ -923,10 +899,6 @@ harness run "your task"</div>
         <div class="ws-progress-bar"><div class="fill" id="wsProgressFill"></div></div>
         <div class="label" id="wsProgressLabel">上传中...</div>
       </div>
-      <div class="ws-file-tree" id="wsFileTree" style="display:none"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary" id="wsOverlayClose" onclick="hideWorkspaceOverlay()" style="display:none">开始使用</button>
     </div>
   </div>
 </div>
@@ -943,15 +915,6 @@ harness run "your task"</div>
     <button class="btn btn-secondary btn-sm" onclick="openGuide()">用户指南</button>
   </div>
 </header>
-
-<div class="ws-bar" id="wsBar">
-  <svg class="ws-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-  <span class="ws-path" id="wsPath">/workspace</span>
-  <div class="ws-actions">
-    <button class="btn btn-sm btn-secondary" onclick="downloadWorkspace()">下载</button>
-    <button class="btn btn-sm btn-secondary" onclick="switchWorkspace()">切换</button>
-  </div>
-</div>
 
 <div class="app-layout">
 
@@ -1012,6 +975,11 @@ harness run "your task"</div>
         <h3>工作目录</h3>
       </div>
       <div class="cwd-display" id="cwdDisplay">加载中...</div>
+      <div id="wsSidebarActions" style="display:none;margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+        <div class="cwd-display" id="wsDirNameDisplay" style="font-size:12px;color:var(--success-text);font-family:var(--font-mono);"></div>
+        <button class="btn btn-sm btn-secondary btn-block" onclick="downloadWorkspace()">下载工作区</button>
+        <button class="btn btn-sm btn-secondary btn-block" onclick="switchWorkspace()">切换工作区</button>
+      </div>
     </div>
 
   </aside>
@@ -1024,31 +992,43 @@ harness run "your task"</div>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
     </div>
     <div class="main-panel-body">
-
-      <div class="task-input-wrap">
-        <textarea id="taskInput" placeholder="输入任务描述...&#10;&#10;示例：&#10;  List all files in the current directory&#10;  Run npm test and fix any failures&#10;  Add error handling to all .ts files"></textarea>
-        <div class="run-bar">
-          <button class="run-btn" id="runBtn" onclick="runTask()">Run Task</button>
-          <span class="key-hint">Ctrl+Enter</span>
+      <div id="cloudUploadZone" style="display:none;width:100%;max-width:720px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div class="dropzone" id="cloudDropzone" style="width:100%;" onclick="document.getElementById('cloudFileInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--muted);margin:0 auto 12px;display:block;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p>请上传工作区（zip）后再运行任务</p>
+          <span class="hint">拖拽 zip 文件到此处，或点击选择文件 | 最大 100MB</span>
+          <input type="file" id="cloudFileInput" accept=".zip" style="display:none" onchange="handleCloudFileSelect(event)">
+        </div>
+        <div class="ws-progress" id="cloudProgress" style="width:100%;">
+          <div class="ws-progress-bar"><div class="fill" id="cloudProgressFill"></div></div>
+          <div class="label" id="cloudProgressLabel">上传中...</div>
         </div>
       </div>
 
-      <div class="output-area" id="outputArea">
-        <div class="output-meta" id="outputMeta"></div>
-        <div class="output-body" id="outputBody">
-          <div class="empty-state" id="emptyState">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-            <p>运行任务后，输出将显示在此处</p>
+      <div id="taskPanel" style="width:100%;max-width:720px;display:flex;flex-direction:column;flex:1;">
+        <div class="task-input-wrap">
+          <textarea id="taskInput" placeholder="输入任务描述...&#10;&#10;示例：&#10;  List all files in the current directory&#10;  Run npm test and fix any failures&#10;  Add error handling to all .ts files"></textarea>
+          <div class="run-bar">
+            <button class="run-btn" id="runBtn" onclick="runTask()">Run Task</button>
+            <span class="key-hint">Ctrl+Enter</span>
+          </div>
+        </div>
+
+        <div class="output-area" id="outputArea">
+          <div class="output-meta" id="outputMeta"></div>
+          <div class="output-body" id="outputBody">
+            <div class="empty-state" id="emptyState">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              <p>运行任务后，输出将显示在此处</p>
+            </div>
           </div>
         </div>
       </div>
-
     </div>
   </main>
 
   <aside class="right-panel" data-od-id="right-panel">
-
-    <div class="panel-section" style="max-height: 40%;">
+    <div class="panel-section">
       <div class="panel-section-header">
         <h3>执行历史</h3>
         <button class="btn btn-sm btn-secondary" onclick="clearHistory()" style="font-size:10px;padding:2px 8px;">清除</button>
@@ -1057,16 +1037,6 @@ harness run "your task"</div>
         <div class="history-empty">暂无执行记录</div>
       </div>
     </div>
-
-    <div class="panel-section">
-      <div class="panel-section-header">
-        <h3>Agent 推理过程</h3>
-      </div>
-      <div class="panel-section-body" id="chainList">
-        <div class="chain-empty">运行任务后，Agent 的思考步骤将显示在此处</div>
-      </div>
-    </div>
-
   </aside>
 
 </div>
@@ -1100,12 +1070,21 @@ function saveHistory(history) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 50)))
 }
 
-async function api(url, opts = {}) {
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
-    ...opts,
-  })
-  return res.json()
+async function api(url, opts = {}, timeoutMs = 120000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      ...opts,
+    })
+    clearTimeout(timer)
+    return res.json()
+  } catch (err) {
+    clearTimeout(timer)
+    throw err
+  }
 }
 
 function showToast(msg, type) {
@@ -1234,28 +1213,20 @@ function restoreHistory(idx) {
   empty.style.display = 'none'
   const statusClass = item.success ? 'success' : 'fail'
   meta.innerHTML = '<span class="tag ' + statusClass + '">' + item.status + '</span><span class="meta-label">Retries: ' + item.retries + '</span>'
-  body.innerHTML = '<div>' + (item.output || '(无输出)') + '</div>'
+  let html = '<div>' + (item.output || '(无输出)') + '</div>'
   if (item.exchanges) {
-    body.innerHTML += '<div class="exchanges"><div class="exchanges-toggle" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg> Process Logs</div><div class="exchanges-body">' + item.exchanges.split('\n---\n').map(function(e) { return '<div class="exchange-entry"><div class="content">' + escapeHtml(e) + '</div></div>' }).join('') + '</div></div>'
+    html += '<div class="exchanges"><div class="exchanges-toggle" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg> Process Logs</div><div class="exchanges-body">' + item.exchanges.split('\n---\n').map(function(e) { return '<div class="exchange-entry"><div class="content">' + escapeHtml(e) + '</div></div>' }).join('') + '</div></div>'
   }
+  body.innerHTML = html
   document.getElementById('taskInput').value = item.task
+  // Scroll to output area
+  area.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function escapeHtml(str) {
   var div = document.createElement('div')
   div.appendChild(document.createTextNode(str))
   return div.innerHTML
-}
-
-function addChainEntry(type, action, detail) {
-  const list = document.getElementById('chainList')
-  const empty = list.querySelector('.chain-empty')
-  if (empty) empty.remove()
-  const div = document.createElement('div')
-  div.className = 'chain-item'
-  div.innerHTML = '<div class="ci-header"><span class="ci-type">' + type + '</span><span class="ci-action">' + escapeHtml(action) + '</span></div><div class="ci-detail">' + escapeHtml(detail) + '</div>'
-  list.appendChild(div)
-  list.scrollTop = list.scrollHeight
 }
 
 function clearHistory() {
@@ -1311,7 +1282,6 @@ async function runTask() {
   const meta = document.getElementById('outputMeta')
   const body = document.getElementById('outputBody')
   const empty = document.getElementById('emptyState')
-  const chainList = document.getElementById('chainList')
 
   btn.disabled = true
   btn.textContent = 'Running...'
@@ -1319,7 +1289,6 @@ async function runTask() {
   empty.style.display = 'none'
   meta.innerHTML = '<span class="tag running">Running...</span>'
   body.innerHTML = ''
-  chainList.innerHTML = '<div class="chain-empty">运行任务后，Agent 的思考步骤将显示在此处</div>'
 
   const stored = getStoredConfig()
   const apiKey = getStoredApiKey()
@@ -1338,11 +1307,14 @@ async function runTask() {
         model: stored.model || defaults.model || 'gpt-4o',
         maxRetries: stored.maxRetries ?? 3,
       }),
-    })
+    }, 300000)
 
     if (data.status === 'no_key') {
       meta.innerHTML = '<span class="tag fail">Error</span>'
       body.innerHTML = '<div>' + (data.message || '') + '</div>'
+    } else if (data.status === 'no_workspace') {
+      meta.innerHTML = '<span class="tag fail">Error</span>'
+      body.innerHTML = '<div>' + (data.message || '请先上传工作区') + '</div>'
     } else {
       const statusClass = data.success ? 'success' : 'fail'
       meta.innerHTML = '<span class="tag ' + statusClass + '">' + (data.status || '') + '</span><span class="meta-label">Retries: ' + (data.retries ?? 0) + '</span>'
@@ -1368,7 +1340,7 @@ async function runTask() {
     }
   } catch (err) {
     meta.innerHTML = '<span class="tag fail">Error</span>'
-    body.innerHTML = '<div>' + err.message + '</div>'
+    body.innerHTML = '<div>' + (err.name === 'AbortError' ? '请求超时，请检查 LLM 配置或网络连接' : err.message) + '</div>'
   }
 
   btn.disabled = false
@@ -1378,15 +1350,25 @@ async function runTask() {
 /* ─── Workspace Functions ──────────────────────────────── */
 async function checkWorkspaceStatus() {
   try {
-    const data = await api('/api/workspace/status')
-    if (data.hasWorkspace) {
-      document.getElementById('wsOverlay').classList.remove('show')
-      document.getElementById('wsBar').classList.add('show')
-      document.getElementById('wsPath').textContent = data.rootDir
-      renderFileTree(data.fileTree)
-    } else {
-      document.getElementById('wsOverlay').classList.add('show')
-      document.getElementById('wsBar').classList.remove('show')
+    const data = await api('/api/workspace/status', {}, 5000)
+    const cloudUploadZone = document.getElementById('cloudUploadZone')
+    const taskPanel = document.getElementById('taskPanel')
+    const wsSidebarActions = document.getElementById('wsSidebarActions')
+    const cwdDisplay = document.getElementById('cwdDisplay')
+
+    if (data.cloudMode && !data.hasWorkspace) {
+      cloudUploadZone.style.display = 'flex'
+      taskPanel.style.display = 'none'
+      wsSidebarActions.style.display = 'none'
+      cwdDisplay.textContent = '（云端模式，请上传工作区）'
+    } else if (data.hasWorkspace) {
+      cloudUploadZone.style.display = 'none'
+      taskPanel.style.display = 'flex'
+      wsSidebarActions.style.display = 'flex'
+      // Show the extracted directory name from the zip root
+      const dirName = data.rootDir.split(/[\\/]/).pop() || data.rootDir
+      document.getElementById('wsDirNameDisplay').textContent = dirName
+      cwdDisplay.textContent = data.rootDir
     }
   } catch (e) {
     // Server not available or no workspace endpoints, skip
@@ -1409,20 +1391,27 @@ async function uploadWorkspace(file) {
   const progress = document.getElementById('wsProgress')
   const fill = document.getElementById('wsProgressFill')
   const label = document.getElementById('wsProgressLabel')
-  const closeBtn = document.getElementById('wsOverlayClose')
+  const cloudProgress = document.getElementById('cloudProgress')
+  const cloudFill = document.getElementById('cloudProgressFill')
+  const cloudLabel = document.getElementById('cloudProgressLabel')
 
   progress.classList.add('show')
   fill.style.width = '0%'
   label.textContent = '读取文件中...'
-  closeBtn.style.display = 'none'
+  if (cloudProgress) {
+    cloudProgress.classList.add('show')
+    cloudFill.style.width = '0%'
+    cloudLabel.textContent = '读取文件中...'
+  }
 
-  // Simulate progress for UI feedback
   fill.style.width = '30%'
+  if (cloudFill) cloudFill.style.width = '30%'
 
   const reader = new FileReader()
   reader.onload = async function() {
     fill.style.width = '60%'
     label.textContent = '上传中...'
+    if (cloudFill) { cloudFill.style.width = '60%'; cloudLabel.textContent = '上传中...' }
 
     try {
       const base64 = reader.result.split(',')[1]
@@ -1433,46 +1422,26 @@ async function uploadWorkspace(file) {
 
       fill.style.width = '100%'
       label.textContent = '上传完成！'
+      if (cloudFill) { cloudFill.style.width = '100%'; cloudLabel.textContent = '上传完成！' }
 
       document.getElementById('wsOverlay').classList.remove('show')
-      document.getElementById('wsBar').classList.add('show')
-      document.getElementById('wsPath').textContent = data.rootDir
-      renderFileTree(data.fileTree)
+      document.getElementById('cloudUploadZone').style.display = 'none'
+      document.getElementById('taskPanel').style.display = 'flex'
+      document.getElementById('wsSidebarActions').style.display = 'flex'
+      const dirName = data.rootDir.split(/[\\/]/).pop() || data.rootDir
+      document.getElementById('wsDirNameDisplay').textContent = dirName
+      document.getElementById('cwdDisplay').textContent = data.rootDir
 
       showToast('工作区已上传 (' + data.files.length + ' 个文件)')
     } catch (err) {
       label.textContent = '上传失败: ' + err.message
       fill.style.width = '0%'
       progress.classList.remove('show')
+      if (cloudProgress) { cloudProgress.classList.remove('show') }
       showToast('上传失败', 'error')
     }
   }
   reader.readAsDataURL(file)
-}
-
-function renderFileTree(tree) {
-  const container = document.getElementById('wsFileTree')
-  if (!tree || !tree.length) {
-    container.style.display = 'none'
-    return
-  }
-  container.style.display = 'block'
-  container.innerHTML = renderTreeNodes(tree, 0)
-}
-
-function renderTreeNodes(nodes, depth) {
-  let html = ''
-  for (const node of nodes) {
-    if (node.type === 'directory') {
-      html += '<div class="ft-node" style="--depth:' + depth + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg><span class="ft-dir">' + escapeHtml(node.name) + '/</span></div>'
-      if (node.children) {
-        html += renderTreeNodes(node.children, depth + 1)
-      }
-    } else {
-      html += '<div class="ft-node" style="--depth:' + depth + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="ft-name">' + escapeHtml(node.name) + '</span></div>'
-    }
-  }
-  return html
 }
 
 async function downloadWorkspace() {
@@ -1495,27 +1464,34 @@ async function downloadWorkspace() {
 }
 
 function switchWorkspace() {
-  document.getElementById('wsBar').classList.remove('show')
   document.getElementById('wsOverlay').classList.add('show')
   document.getElementById('wsProgress').classList.remove('show')
-  document.getElementById('wsOverlayClose').style.display = 'none'
 }
 
 function hideWorkspaceOverlay() {
   document.getElementById('wsOverlay').classList.remove('show')
 }
 
+// Cloud upload zone drag-and-drop
+function handleCloudFileSelect(e) {
+  const file = e.target.files[0]
+  if (file) uploadWorkspace(file)
+}
+
 // Drag-and-drop events
 document.addEventListener('DOMContentLoaded', function() {
   const dz = document.getElementById('dropzone')
-  dz.addEventListener('dragover', function(e) {
-    e.preventDefault()
-    dz.classList.add('drag-over')
-  })
-  dz.addEventListener('dragleave', function() {
-    dz.classList.remove('drag-over')
-  })
-  dz.addEventListener('drop', handleDrop)
+  if (dz) {
+    dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('drag-over') })
+    dz.addEventListener('dragleave', function() { dz.classList.remove('drag-over') })
+    dz.addEventListener('drop', handleDrop)
+  }
+  const cloudDz = document.getElementById('cloudDropzone')
+  if (cloudDz) {
+    cloudDz.addEventListener('dragover', function(e) { e.preventDefault(); cloudDz.classList.add('drag-over') })
+    cloudDz.addEventListener('dragleave', function() { cloudDz.classList.remove('drag-over') })
+    cloudDz.addEventListener('drop', handleDrop)
+  }
 })
 
 document.addEventListener('keydown', function(e) {
@@ -1578,9 +1554,13 @@ loadConfig()
 loadKeyStatus()
 loadCwd()
 renderHistory()
-checkWorkspaceStatus()
 updateTextareaMaxHeight()
-if (!localStorage.getItem(GUIDE_DISMISSED)) { openGuide() }
+// Check guide first; workspace status check runs after guide is dismissed
+if (!localStorage.getItem(GUIDE_DISMISSED)) {
+  openGuide()
+}
+// Delay workspace check so guide modal appears first
+setTimeout(checkWorkspaceStatus, 500)
 </script>
 
 </body>
