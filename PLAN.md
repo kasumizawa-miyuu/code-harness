@@ -2327,3 +2327,360 @@ git commit -m "docs: add README and update SPEC (subagent: primary)"
 | 12. Demo | Task 15 |
 
 **No gaps found.** Each spec requirement maps to at least one task.
+
+---
+
+## Task 18: Cloud Workspace Manager
+
+**Files:**
+- Create: `src/WorkspaceManager.ts`
+- Create: `tests/unit/WorkspaceManager.test.ts`
+- Update: `package.json` — add `adm-zip` dependency
+
+**Overview:**
+WorkspaceManager handles the lifecycle of uploaded workspaces: session creation, zip extraction, file tree scanning, zip download, and cleanup. This enables safe cloud deployment where users can upload their project files to a temporary workspace.
+
+- [ ] **Step 1: Write the failing test**
+
+```typescript
+// tests/unit/WorkspaceManager.test.ts
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { createWorkspaceManager } from '../../src/WorkspaceManager.js'
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
+import { mkdtempSync, rmSync } from 'node:fs'
+import * as AdmZip from 'adm-zip'
+
+describe('WorkspaceManager', () => {
+  let baseDir: string
+  let manager: ReturnType<typeof createWorkspaceManager>
+
+  beforeEach(() => {
+    baseDir = mkdtempSync(join(tmpdir(), 'harness-ws-test-'))
+    manager = createWorkspaceManager({ baseDir })
+  })
+
+  afterEach(() => {
+    rmSync(baseDir, { recursive: true, force: true })
+  })
+
+  it('should create a session with unique ID', () => {
+    const session = manager.createSession()
+    expect(session.sessionId).toBeTruthy()
+    expect(session.rootDir).toContain(session.sessionId)
+    expect(existsSync(session.rootDir)).toBe(true)
+  })
+
+  it('should extract zip and preserve directory structure', async () => {
+    const session = manager.createSession()
+    // Create a test zip with nested structure
+    const zip = new AdmZip()
+    zip.addFile('src/main.ts', Buffer.from('console.log("hello")'))
+    zip.addFile('src/utils/helper.ts', Buffer.from('export const x = 1'))
+    zip.addFile('README.md', Buffer.from('# Project'))
+    const zipBuffer = zip.toBuffer()
+
+    const files = await manager.uploadZip(session.sessionId, zipBuffer)
+    expect(files).toContain('src/main.ts')
+    expect(files).toContain('src/utils/helper.ts')
+    expect(files).toContain('README.md')
+    expect(existsSync(join(session.rootDir, 'src/main.ts'))).toBe(true)
+    expect(existsSync(join(session.rootDir, 'src/utils/helper.ts'))).toBe(true)
+  })
+
+  it('should reject path traversal attacks in zip', async () => {
+    const session = manager.createSession()
+    const zip = new AdmZip()
+    zip.addFile('../../etc/passwd', Buffer.from('hack'))
+    const zipBuffer = zip.toBuffer()
+
+    await expect(manager.uploadZip(session.sessionId, zipBuffer)).rejects.toThrow()
+  })
+
+  it('should return file tree', async () => {
+    const session = manager.createSession()
+    const zip = new AdmZip()
+    zip.addFile('file1.txt', Buffer.from('a'))
+    zip.addFile('dir/file2.txt', Buffer.from('b'))
+    await manager.uploadZip(session.sessionId, zip.toBuffer())
+
+    const tree = manager.getFileTree(session.sessionId)
+    expect(tree.length).toBe(3) // root + file1.txt + dir/
+    const root = tree.find(n => n.name === '/')
+    expect(root).toBeTruthy()
+    expect(root!.children!.length).toBe(2)
+  })
+
+  it('should create downloadable zip', async () => {
+    const session = manager.createSession()
+    const zip = new AdmZip()
+    zip.addFile('test.txt', Buffer.from('content'))
+    await manager.uploadZip(session.sessionId, zip.toBuffer())
+
+    // Modify a file to simulate agent work
+    writeFileSync(join(session.rootDir, 'test.txt'), 'modified content')
+
+    const downloadBuffer = await manager.downloadZip(session.sessionId)
+    const extracted = new AdmZip(Buffer.from(downloadBuffer))
+    const entry = extracted.getEntry('test.txt')
+    expect(entry).toBeTruthy()
+    expect(entry!.getData().toString()).toBe('modified content')
+  })
+
+  it('should clean up a session', () => {
+    const session = manager.createSession()
+    expect(existsSync(session.rootDir)).toBe(true)
+    manager.cleanup(session.sessionId)
+    expect(existsSync(session.rootDir)).toBe(false)
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest run tests/unit/WorkspaceManager.test.ts -v`
+Expected: FAIL — "Cannot find module '../../src/WorkspaceManager.js'"
+
+- [ ] **Step 3: Write minimal implementation**
+
+```typescript
+// src/WorkspaceManager.ts
+import { mkdtempSync, existsSync, readFileSync, writeFileSync, rmSync, readdirSync, statSync, createReadStream, createWriteStream } from 'node:fs'
+import { join, relative, sep } from 'node:path'
+import { tmpdir } from 'node:os'
+import { randomUUID } from 'node:crypto'
+import AdmZip from 'adm-zip'
+
+export interface WorkspaceSession {
+  sessionId: string
+  rootDir: string
+  createdAt: number
+}
+
+export interface FileNode {
+  name: string
+  path: string
+  type: 'file' | 'directory'
+  children?: FileNode[]
+}
+
+export interface WorkspaceManager {
+  createSession(): WorkspaceSession
+  uploadZip(sessionId: string, zipBuffer: Buffer): Promise<string[]>
+  getFileTree(sessionId: string): FileNode[]
+  downloadZip(sessionId: string): Promise<Buffer>
+  cleanup(sessionId: string): void
+  cleanupAll(): void
+  getSession(sessionId: string): WorkspaceSession | undefined
+}
+
+export function createWorkspaceManager(options: { baseDir?: string } = {}): WorkspaceManager {
+  const baseDir = options.baseDir || join(tmpdir(), 'harness-workspaces')
+  const sessions = new Map<string, WorkspaceSession>()
+
+  if (!existsSync(baseDir)) {
+    mkdtempSync(baseDir)
+  }
+
+  function getSessionDir(sessionId: string): string {
+    return join(baseDir, `workspace-${sessionId}`)
+  }
+
+  function scanFiles(rootDir: string, relativePath: string = ''): string[] {
+    const files: string[] = []
+    const fullPath = join(rootDir, relativePath)
+    const entries = readdirSync(fullPath)
+    for (const entry of entries) {
+      const entryPath = join(relativePath, entry)
+      const fullEntryPath = join(rootDir, entryPath)
+      if (statSync(fullEntryPath).isDirectory()) {
+        files.push(...scanFiles(rootDir, entryPath))
+      } else {
+        files.push(entryPath.replace(/\\/g, '/'))
+      }
+    }
+    return files
+  }
+
+  function buildFileTree(rootDir: string): FileNode {
+    const name = '/'
+    const children: FileNode[] = []
+    const entries = readdirSync(rootDir).sort()
+    for (const entry of entries) {
+      const fullPath = join(rootDir, entry)
+      if (statSync(fullPath).isDirectory()) {
+        children.push({
+          name: entry,
+          path: entry,
+          type: 'directory',
+          children: buildFileTree(fullPath).children,
+        })
+      } else {
+        children.push({ name: entry, path: entry, type: 'file' })
+      }
+    }
+    return { name, path: '', type: 'directory', children }
+  }
+
+  return {
+    createSession(): WorkspaceSession {
+      const sessionId = randomUUID()
+      const rootDir = getSessionDir(sessionId)
+      mkdtempSync(rootDir)
+      const session: WorkspaceSession = { sessionId, rootDir, createdAt: Date.now() }
+      sessions.set(sessionId, session)
+      return session
+    },
+
+    async uploadZip(sessionId: string, zipBuffer: Buffer): Promise<string[]> {
+      const session = sessions.get(sessionId)
+      if (!session) throw new Error('Session not found')
+      const zip = new AdmZip(zipBuffer)
+      const entries = zip.getEntries()
+      const extractedFiles: string[] = []
+
+      for (const entry of entries) {
+        const entryPath = entry.entryName.replace(/\\/g, '/')
+        // Path traversal protection
+        if (entryPath.includes('..')) {
+          throw new Error(`Path traversal detected: ${entryPath}`)
+        }
+        if (entry.isDirectory) continue
+        const targetPath = join(session.rootDir, entryPath)
+        const targetDir = targetPath.substring(0, targetPath.lastIndexOf(sep))
+        if (!existsSync(targetDir)) {
+          mkdirSync(targetDir, { recursive: true })
+        }
+        writeFileSync(targetPath, entry.getData())
+        extractedFiles.push(entryPath)
+      }
+
+      return extractedFiles
+    },
+
+    getFileTree(sessionId: string): FileNode[] {
+      const session = sessions.get(sessionId)
+      if (!session) throw new Error('Session not found')
+      const root = buildFileTree(session.rootDir)
+      return root.children || []
+    },
+
+    async downloadZip(sessionId: string): Promise<Buffer> {
+      const session = sessions.get(sessionId)
+      if (!session) throw new Error('Session not found')
+      const zip = new AdmZip()
+      const files = scanFiles(session.rootDir)
+      for (const file of files) {
+        const fullPath = join(session.rootDir, file)
+        zip.addFile(file, readFileSync(fullPath))
+      }
+      return zip.toBuffer()
+    },
+
+    cleanup(sessionId: string): void {
+      const session = sessions.get(sessionId)
+      if (session) {
+        rmSync(session.rootDir, { recursive: true, force: true })
+        sessions.delete(sessionId)
+      }
+    },
+
+    cleanupAll(): void {
+      for (const [id] of sessions) {
+        this.cleanup(id)
+      }
+    },
+
+    getSession(sessionId: string): WorkspaceSession | undefined {
+      return sessions.get(sessionId)
+    },
+  }
+}
+```
+
+- [ ] **Step 4: Install adm-zip dependency**
+
+Run: `npm install adm-zip`
+Also install types: `npm install -D @types/adm-zip`
+
+- [ ] **Step 5: Run test to verify it passes**
+
+Run: `npx vitest run tests/unit/WorkspaceManager.test.ts -v`
+Expected: PASS — all 6 tests pass
+
+- [ ] **Step 6: Commit**
+
+```
+git add src/WorkspaceManager.ts tests/unit/WorkspaceManager.test.ts package.json
+git commit -m "feat: add WorkspaceManager with zip upload, file tree, download, cleanup (subagent: primary)"
+```
+
+---
+
+## Task 19: Cloud Workspace — Server Integration
+
+**Files:**
+- Modify: `src/server.ts` — add environment detection, upload/download/status endpoints, cloud mode guard
+- Modify: `public/index.html` — add workspace upload UI, file tree, download button
+
+**Overview:**
+Integrate WorkspaceManager into the Express server. Add cloud environment detection, three new API endpoints, and a cloud-mode guard that rejects task execution until a workspace is uploaded. Update the frontend with upload/download UI.
+
+- [ ] **Step 1: Write the failing test (integration)**
+
+```typescript
+// tests/integration/CloudWorkspace.test.ts
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+// Integration test for server endpoints
+```
+
+- [ ] **Step 2: Update server.ts**
+
+Add to server.ts:
+1. Environment detection function (`isCloudEnvironment()`)
+2. WorkspaceManager instance
+3. `POST /api/workspace/upload` — accepts multipart zip, extracts to temp dir
+4. `GET /api/workspace/download` — returns zip of current workspace
+5. `GET /api/workspace/status` — returns workspace info
+6. Cloud mode guard in `/api/run` — reject if no workspace uploaded
+
+- [ ] **Step 3: Update public/index.html**
+
+Add to the frontend:
+1. Cloud mode detection → show upload overlay
+2. File upload area (drag-and-drop + click)
+3. Upload progress indicator
+4. File tree display after upload
+5. "Download workspace" button
+6. "Switch workspace" button
+
+- [ ] **Step 4: Run test to verify it passes**
+
+- [ ] **Step 5: Commit**
+
+```
+git add src/server.ts public/index.html
+git commit -m "feat: integrate cloud workspace with upload/download/status endpoints and UI (subagent: primary)"
+```
+
+---
+
+## Task 20: Update Docs
+
+**Files:**
+- Modify: `SPEC.md` — already updated
+- Modify: `AGENT_LOG.md` — add this session
+- Modify: `SPEC_PROCESS.md` — add this brainstorming session
+- New: `docs/superpowers/specs/2026-07-24-cloud-workspace-design.md` — already created
+
+- [ ] **Step 1: Update AGENT_LOG.md**
+
+- [ ] **Step 2: Update SPEC_PROCESS.md**
+
+- [ ] **Step 3: Commit**
+
+```
+git add AGENT_LOG.md SPEC_PROCESS.md SPEC.md
+git commit -m "docs: update docs for cloud workspace feature (subagent: primary)"
+```

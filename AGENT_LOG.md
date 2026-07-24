@@ -151,3 +151,24 @@ Due to the workflow sequence (branches merged locally before pushing to GitHub),
 **Docs updated:**
 - `SPEC.md` — added Open Design to tech stack table
 - `AGENT_LOG.md` — updated with latest changes
+
+## 2026-07-24
+
+### 21: Cloud Workspace Design — Skill: `brainstorming`
+
+**Prompt context:** "WebUI 部署到云端后工作目录问题是服务器目录，Agent 无法操作本地文件"
+
+**Key interactions:**
+- AI 提出三种方案：A) 纯浏览器端虚拟文件系统，B) 服务端临时工作区，C) Git 集成
+- 选择了 A+B 混合方案：上传 zip → 解压到服务端临时目录 → Agent 完整操作 → 下载修改后的 zip
+- 确认了环境检测（云端 vs 本地）、上传 UI、文件树展示、下载、自动清理等细节
+
+**Human decisions:**
+- 选择混合方案（A+B），保留 Agent 完整能力（读/写/执行命令）
+- 下载的 zip 保留原始目录结构
+- 设计中不需要展示单个文件列表，只需要上传 zip 后展示根目录结构
+
+**Docs updated:**
+- `docs/superpowers/specs/2026-07-24-cloud-workspace-design.md` — 新建设计文档
+- `SPEC.md` — 新增 §3.10 云端工作区
+- `PLAN.md` — 新增 Task 18-20
