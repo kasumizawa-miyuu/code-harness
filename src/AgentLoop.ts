@@ -29,6 +29,10 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
   const injector = createFeedbackInjector()
 
   const provider = llmProvider ?? createMockLLMProvider()
+  const workDir = config.workDir || process.cwd()
+
+  // Build system prompt with workspace info
+  const systemPrompt = `${SYSTEM_PROMPT}\n\nYour workspace directory is: ${workDir}\nAll file paths must be absolute paths within this workspace.`
 
   return {
     setMockResponses(responses: string[]) {
@@ -39,7 +43,7 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
 
     async run(task: string): Promise<AgentLoopResult> {
       let context: Context = {
-        systemPrompt: SYSTEM_PROMPT,
+        systemPrompt: systemPrompt,
         task,
         history: [],
         lastFeedback: null,

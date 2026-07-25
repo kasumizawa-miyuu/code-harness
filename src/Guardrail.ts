@@ -12,7 +12,7 @@ export function createGuardrail(config: { dangerousCommands: string[]; allowedPa
         }
       }
 
-      if (action.type === 'write_file' || action.type === 'patch_file') {
+      if (action.type === 'read_file' || action.type === 'write_file' || action.type === 'patch_file') {
         const path = action.params.path || ''
         const allowed = config.allowedPaths.some((p: string) => path.startsWith(p))
         if (!allowed) {

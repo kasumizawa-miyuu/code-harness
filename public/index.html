@@ -794,6 +794,16 @@
       font-family: var(--font-mono);
     }
 
+    /* ─── Loading State ──────────────────────────────────────── */
+    .loading-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
     /* ─── Responsive ──────────────────────────────────────────── */
     .ws-file-tree {
       text-align: left;
@@ -992,7 +1002,8 @@ harness run "your task"</div>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
     </div>
     <div class="main-panel-body">
-      <div id="cloudUploadZone" style="display:none;width:100%;max-width:720px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div class="loading-state" id="loadingState">检查环境...</div>
+      <div id="cloudUploadZone" style="display:none;width:100%;max-width:720px;flex:1;flex-direction:column;align-items:center;justify-content:center;">
         <div class="dropzone" id="cloudDropzone" style="width:100%;" onclick="document.getElementById('cloudFileInput').click()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--muted);margin:0 auto 12px;display:block;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <p>请上传工作区（zip）后再运行任务</p>
@@ -1005,7 +1016,7 @@ harness run "your task"</div>
         </div>
       </div>
 
-      <div id="taskPanel" style="width:100%;max-width:720px;display:flex;flex-direction:column;flex:1;">
+      <div id="taskPanel" style="display:none;width:100%;max-width:720px;flex-direction:column;flex:1;">
         <div class="task-input-wrap">
           <textarea id="taskInput" placeholder="输入任务描述...&#10;&#10;示例：&#10;  List all files in the current directory&#10;  Run npm test and fix any failures&#10;  Add error handling to all .ts files"></textarea>
           <div class="run-bar">
@@ -1071,20 +1082,16 @@ function saveHistory(history) {
 }
 
 async function api(url, opts = {}, timeoutMs = 120000) {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    const res = await fetch(url, {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
+    fetch(url, {
       headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
       ...opts,
     })
-    clearTimeout(timer)
-    return res.json()
-  } catch (err) {
-    clearTimeout(timer)
-    throw err
-  }
+    .then(res => { clearTimeout(timer); return res.json() })
+    .then(resolve)
+    .catch(err => { clearTimeout(timer); reject(err) })
+  })
 }
 
 function showToast(msg, type) {
@@ -1324,7 +1331,6 @@ async function runTask() {
       }
       body.innerHTML = html
 
-      // Add to history
       const history = getStoredHistory()
       history.unshift({
         task: task,
@@ -1340,11 +1346,11 @@ async function runTask() {
     }
   } catch (err) {
     meta.innerHTML = '<span class="tag fail">Error</span>'
-    body.innerHTML = '<div>' + (err.name === 'AbortError' ? '请求超时，请检查 LLM 配置或网络连接' : err.message) + '</div>'
+    body.innerHTML = '<div>' + (err.message || '请求失败') + '</div>'
+  } finally {
+    btn.disabled = false
+    btn.textContent = 'Run Task'
   }
-
-  btn.disabled = false
-  btn.textContent = 'Run Task'
 }
 
 /* ─── Workspace Functions ──────────────────────────────── */
@@ -1353,8 +1359,11 @@ async function checkWorkspaceStatus() {
     const data = await api('/api/workspace/status', {}, 5000)
     const cloudUploadZone = document.getElementById('cloudUploadZone')
     const taskPanel = document.getElementById('taskPanel')
+    const loadingState = document.getElementById('loadingState')
     const wsSidebarActions = document.getElementById('wsSidebarActions')
     const cwdDisplay = document.getElementById('cwdDisplay')
+
+    if (loadingState) loadingState.style.display = 'none'
 
     if (data.cloudMode && !data.hasWorkspace) {
       cloudUploadZone.style.display = 'flex'
@@ -1365,13 +1374,19 @@ async function checkWorkspaceStatus() {
       cloudUploadZone.style.display = 'none'
       taskPanel.style.display = 'flex'
       wsSidebarActions.style.display = 'flex'
-      // Show the extracted directory name from the zip root
-      const dirName = data.rootDir.split(/[\\/]/).pop() || data.rootDir
-      document.getElementById('wsDirNameDisplay').textContent = dirName
+      const displayName = data.zipName || data.rootDir.split(/[\\/]/).pop() || data.rootDir
+      document.getElementById('wsDirNameDisplay').textContent = displayName
       cwdDisplay.textContent = data.rootDir
+    } else {
+      taskPanel.style.display = 'flex'
+      cloudUploadZone.style.display = 'none'
+      wsSidebarActions.style.display = 'none'
     }
   } catch (e) {
-    // Server not available or no workspace endpoints, skip
+    // Server not available or no workspace endpoints, show task panel
+    document.getElementById('loadingState').style.display = 'none'
+    document.getElementById('taskPanel').style.display = 'flex'
+    document.getElementById('cloudUploadZone').style.display = 'none'
   }
 }
 
@@ -1415,9 +1430,10 @@ async function uploadWorkspace(file) {
 
     try {
       const base64 = reader.result.split(',')[1]
+      const zipName = file.name
       const data = await api('/api/workspace/upload', {
         method: 'POST',
-        body: JSON.stringify({ zipBase64: base64 }),
+        body: JSON.stringify({ zipBase64: base64, zipName }),
       })
 
       fill.style.width = '100%'
@@ -1428,8 +1444,8 @@ async function uploadWorkspace(file) {
       document.getElementById('cloudUploadZone').style.display = 'none'
       document.getElementById('taskPanel').style.display = 'flex'
       document.getElementById('wsSidebarActions').style.display = 'flex'
-      const dirName = data.rootDir.split(/[\\/]/).pop() || data.rootDir
-      document.getElementById('wsDirNameDisplay').textContent = dirName
+      const displayName = data.zipName || zipName.replace(/\.zip$/i, '')
+      document.getElementById('wsDirNameDisplay').textContent = displayName
       document.getElementById('cwdDisplay').textContent = data.rootDir
 
       showToast('工作区已上传 (' + data.files.length + ' 个文件)')

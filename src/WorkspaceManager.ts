@@ -7,6 +7,7 @@ export interface WorkspaceSession {
   sessionId: string
   rootDir: string
   createdAt: number
+  zipName?: string
 }
 
 export interface FileNode {

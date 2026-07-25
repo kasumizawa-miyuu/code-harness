@@ -91,12 +91,15 @@ app.post('/api/run', async (req, res) => {
 })
 
 app.get('/api/cwd', (_req, res) => {
-  res.json({ cwd: process.cwd(), homedir: homedir() })
+  const cwd = (cloudMode && currentSessionId)
+    ? (wsManager.getSession(currentSessionId)?.rootDir || process.cwd())
+    : process.cwd()
+  res.json({ cwd, homedir: homedir() })
 })
 
 app.post('/api/workspace/upload', async (req, res) => {
   try {
-    const { zipBase64 } = req.body
+    const { zipBase64, zipName } = req.body
     if (!zipBase64) {
       return res.status(400).json({ error: 'Missing zipBase64' })
     }
@@ -113,6 +116,9 @@ app.post('/api/workspace/upload', async (req, res) => {
     }
 
     const session = wsManager.createSession()
+    if (zipName) {
+      session.zipName = zipName.replace(/\.zip$/i, '')
+    }
     const files = await wsManager.uploadZip(session.sessionId, buffer)
     const fileTree = wsManager.getFileTree(session.sessionId)
     currentSessionId = session.sessionId
@@ -120,6 +126,7 @@ app.post('/api/workspace/upload', async (req, res) => {
     res.json({
       sessionId: session.sessionId,
       rootDir: session.rootDir,
+      zipName: session.zipName,
       files,
       fileTree,
     })
@@ -135,6 +142,7 @@ app.get('/api/workspace/status', (_req, res) => {
     cloudMode,
     sessionId: session?.sessionId ?? null,
     rootDir: session?.rootDir ?? null,
+    zipName: session?.zipName ?? null,
     fileCount: session ? wsManager.getFileTree(session.sessionId).length : null,
     fileTree: session ? wsManager.getFileTree(session.sessionId) : null,
   })
