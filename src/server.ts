@@ -162,6 +162,14 @@ app.get('/api/workspace/download', async (_req, res) => {
   }
 })
 
+app.post('/api/workspace/cleanup', (_req, res) => {
+  if (currentSessionId) {
+    wsManager.cleanup(currentSessionId)
+    currentSessionId = null
+  }
+  res.json({ success: true })
+})
+
 const PORT = parseInt(process.env.PORT || '3000', 10)
 
 export async function startServer() {
