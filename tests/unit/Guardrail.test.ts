@@ -46,4 +46,16 @@ describe('Guardrail', () => {
     expect(result.allowed).toBe(false)
     if (!result.allowed) expect(result.reason).toContain('path')
   })
+
+  it('should block path traversal with .. in file paths', async () => {
+    const result = await guardrail.check(createAction('read_file', { path: '/home/project/../../etc/passwd' }))
+    expect(result.allowed).toBe(false)
+    if (!result.allowed) expect(result.reason).toContain('path')
+  })
+
+  it('should block sibling directory bypass', async () => {
+    const result = await guardrail.check(createAction('read_file', { path: '/home/project-other/secret.txt' }))
+    expect(result.allowed).toBe(false)
+    if (!result.allowed) expect(result.reason).toContain('path')
+  })
 })
