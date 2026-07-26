@@ -19,9 +19,26 @@ describe('Guardrail', () => {
     expect(result.allowed).toBe(true)
   })
 
+  it('should block commands accessing files outside workspace', async () => {
+    const result = await guardrail.check(createAction('run_command', { command: 'cat /etc/passwd' }))
+    expect(result.allowed).toBe(false)
+    if (!result.allowed) expect(result.reason).toContain('outside workspace')
+  })
+
+  it('should allow commands accessing files within workspace', async () => {
+    const result = await guardrail.check(createAction('run_command', { command: 'cat /home/project/src/main.ts' }))
+    expect(result.allowed).toBe(true)
+  })
+
   it('should allow reads within allowed paths', async () => {
     const result = await guardrail.check(createAction('read_file', { path: '/home/project/src/main.ts' }))
     expect(result.allowed).toBe(true)
+  })
+
+  it('should block reads outside allowed paths', async () => {
+    const result = await guardrail.check(createAction('read_file', { path: '/etc/passwd' }))
+    expect(result.allowed).toBe(false)
+    if (!result.allowed) expect(result.reason).toContain('path')
   })
 
   it('should block writes outside allowed paths', async () => {

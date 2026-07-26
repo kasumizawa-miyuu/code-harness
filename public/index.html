@@ -1082,15 +1082,30 @@ function saveHistory(history) {
 }
 
 async function api(url, opts = {}, timeoutMs = 120000) {
+  console.log('[api] calling:', url, opts ? 'with body' : 'no body')
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
+    const timer = setTimeout(() => {
+      console.log('[api] timeout after', timeoutMs, 'ms for', url)
+      reject(new Error('Request timeout'))
+    }, timeoutMs)
     fetch(url, {
       headers: { 'Content-Type': 'application/json' },
       ...opts,
     })
-    .then(res => { clearTimeout(timer); return res.json() })
-    .then(resolve)
-    .catch(err => { clearTimeout(timer); reject(err) })
+    .then(res => {
+      clearTimeout(timer)
+      console.log('[api] response received:', url, res.status)
+      return res.json()
+    })
+    .then(data => {
+      console.log('[api] JSON parsed:', url)
+      resolve(data)
+    })
+    .catch(err => {
+      clearTimeout(timer)
+      console.log('[api] error:', url, err.message)
+      reject(err)
+    })
   })
 }
 
@@ -1218,6 +1233,8 @@ function restoreHistory(idx) {
   const empty = document.getElementById('emptyState')
   area.classList.add('show')
   empty.style.display = 'none'
+  meta.innerHTML = ''
+  body.innerHTML = ''
   const statusClass = item.success ? 'success' : 'fail'
   meta.innerHTML = '<span class="tag ' + statusClass + '">' + item.status + '</span><span class="meta-label">Retries: ' + item.retries + '</span>'
   let html = '<div>' + (item.output || '(无输出)') + '</div>'
@@ -1226,7 +1243,6 @@ function restoreHistory(idx) {
   }
   body.innerHTML = html
   document.getElementById('taskInput').value = item.task
-  // Scroll to output area
   area.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
@@ -1276,13 +1292,13 @@ function applyTheme() {
 // Listen for system theme changes when no manual override
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
   if (!localStorage.getItem(THEME_KEY)) {
+    applyTheme()
+  }
+})
+
 // Cleanup workspace on page close
 window.addEventListener('beforeunload', function() {
   navigator.sendBeacon('/api/workspace/cleanup', '')
-})
-
-applyTheme()
-  }
 })
 
 async function runTask() {

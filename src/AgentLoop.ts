@@ -32,7 +32,7 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
   const workDir = config.workDir || process.cwd()
 
   // Build system prompt with workspace info
-  const systemPrompt = `${SYSTEM_PROMPT}\n\nYour workspace directory is: ${workDir}\nAll file paths must be absolute paths within this workspace.`
+  const systemPrompt = `${SYSTEM_PROMPT}\n\nYour workspace directory is: ${workDir}\nAll file paths must be absolute paths within this workspace.\nUse read_file/write_file/patch_file for file operations, NOT run_command.`
 
   return {
     setMockResponses(responses: string[]) {
