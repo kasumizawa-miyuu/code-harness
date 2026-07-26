@@ -1314,9 +1314,13 @@ async function runTask() {
   btn.disabled = true
   btn.textContent = 'Running...'
   area.classList.add('show')
-  empty.style.display = 'none'
+  if (empty) empty.style.display = 'none'
   meta.innerHTML = '<span class="tag running">Running...</span>'
-  body.innerHTML = ''
+  // Clear only the output content, not the emptyState placeholder
+  var children = body.children
+  for (var i = children.length - 1; i >= 0; i--) {
+    if (children[i].id !== 'emptyState') body.removeChild(children[i])
+  }
 
   const stored = getStoredConfig()
   const apiKey = getStoredApiKey()
