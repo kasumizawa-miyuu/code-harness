@@ -1,13 +1,16 @@
 # code-harness
 
+> **English** · [中文](README.zh.md)
+
 A lightweight, feedback-loop-driven Coding Agent Harness. Built for the AI4SE final project.
+
+**Core equation:** Agent = LLM + Harness. This project implements the harness — the engineering layer that turns an LLM's next-step decisions into a reliable, testable automation system.
 
 ## Quick Start
 
 ### Option 1: CLI (direct access to local files)
 
 ```bash
-# Install
 git clone https://github.com/kasumizawa-miyuu/code-harness.git
 cd code-harness
 npm install
@@ -29,11 +32,11 @@ docker build -t code-harness .
 docker run -v $(pwd):/workspace -w /workspace -p 3000:3000 code-harness
 ```
 
-Then open http://localhost:3000. The `-v $(pwd):/workspace` mount gives the WebUI access to your current directory's files.
+Open http://localhost:3000. The `-v $(pwd):/workspace` mount gives the WebUI access to your current directory's files.
 
 ### Option 3: Deployed WebUI
 
-Visit the deployed instance (no installation needed), but the WebUI operates on the server's filesystem. Use Docker volume mounts to connect your local files.
+Visit https://code-harness.onrender.com — no installation needed. Upload your project as a zip file, and the agent works in an isolated cloud workspace.
 
 ## Commands
 
@@ -48,9 +51,10 @@ Visit the deployed instance (no installation needed), but the WebUI operates on 
 
 ## API Key Security
 
-- API keys are stored in your OS keychain via `keytar` (Windows Credential Manager / macOS Keychain / Linux Secret Service)
-- The `HARNESS_API_KEY` environment variable is supported as a fallback (note: .env files are plaintext, process environments are visible to other processes on the same machine)
+- API keys stored in OS keychain via `keytar` (Windows Credential Manager / macOS Keychain / Linux Secret Service)
+- `HARNESS_API_KEY` environment variable supported as fallback (.env files are plaintext; process environments visible to other processes)
 - Keys are never hardcoded, logged, or committed to git
+- Key status display never reveals the full key
 
 ## Distribution
 
@@ -62,99 +66,95 @@ npm install -g @student/code-harness
 
 ### Docker
 
-Build and run with local file access:
-
 ```bash
 docker build -t code-harness .
 docker run -v $(pwd):/workspace -w /workspace -p 3000:3000 code-harness
-```
-
-The `-v $(pwd):/workspace` mount makes your current directory available to the agent inside the container at `/workspace`. The `-p 3000:3000` exposes the WebUI on your local machine.
-
-### npm
-
-## Development
-
-```bash
-git clone <repo>
-cd code-harness
-npm install
-npm test
-```
-
-## Architecture
-
-6 components + 1 loop:
-
-- **AgentLoop** — orchestrates the main loop
-- **LLMProvider** — wraps LLM calls (replaceable with mock)
-- **ActionParser** — regex-based action extraction from LLM output
-- **ToolExecutor** — file operations and shell execution
-- **Guardrail** — dangerous command blacklist + path whitelist
-- **Verifier** — 5-category feedback classification (feedback loop core)
-- **FeedbackInjector** — structured feedback injection into context
-- **Memory** — KV store with sliding window and JSON persistence
-
-## Mechanism Demos
-
-```bash
-npm run demo:guardrail       # Guardrail intercepts dangerous command
-npm run demo:feedback-loop   # Agent fails -> feedback -> retry -> succeeds
-npm run demo:adaptive-retry  # Repeated error -> early stop
 ```
 
 ## Project Structure
 
 ```
 code-harness/
-├── src/           # Source code
+├── src/           # Source code (harness kernel)
+│   ├── AgentLoop.ts          # Main loop orchestrator
+│   ├── LLMProvider.ts        # LLM call wrapper (replaceable with mock)
+│   ├── MockLLMProvider.ts    # Mock implementation for deterministic testing
+│   ├── ActionParser.ts       # Regex-based action extraction
+│   ├── ToolExecutor.ts       # File operations + shell execution + path sandbox
+│   ├── Guardrail.ts          # Dangerous command blocking + path whitelist
+│   ├── Verifier.ts           # 5-category feedback classification
+│   ├── FeedbackInjector.ts   # Structured feedback injection
+│   ├── Memory.ts             # KV store with sliding window
+│   ├── WorkspaceManager.ts   # Cloud workspace lifecycle (zip upload/download)
+│   ├── Config.ts             # Config loading (JSON + env overrides)
+│   ├── KeyManager.ts         # Credential management (keytar)
+│   ├── Logger.ts             # Logging utility
+│   ├── server.ts             # Express server (WebUI backend)
+│   └── types.ts              # All interfaces and type definitions
 ├── tests/         # Tests (unit + integration + demo)
-│   ├── unit/
-│   ├── integration/
-│   └── demo/
+│   ├── unit/       # 11 test files, 44+ tests
+│   ├── integration/# 4 test files
+│   └── demo/       # 3 mechanism demo scripts
 ├── public/        # WebUI static files
-├── docs/          # Design docs and plans
-├── SPEC.md
-├── PLAN.md
-├── README.md
+├── docs/          # Design docs
+├── SPEC.md        # Design specification
+├── PLAN.md        # Implementation plan
+├── AGENT_LOG.md   # Development log
+├── SPEC_PROCESS.md# Spec generation process
+├── REFLECTION.md  # Project reflection (1500-2500 words)
 ├── Dockerfile
-└── render.yaml
+└── render.yaml    # Render deployment config
 ```
 
-## WebUI
+## Mechanism Demos
 
-Start the web interface:
+These demos run with mock LLM — no real API key needed:
 
 ```bash
-harness serve
+npm run demo:guardrail       # Guardrail intercepts dangerous command
+npm run demo:feedback-loop   # Agent fails → feedback → retry → succeeds
+npm run demo:adaptive-retry  # Repeated error → early stop
 ```
 
-Open http://localhost:3000 in your browser.
+## Testing
 
-The WebUI includes a **User Guide** modal with instructions on Docker volume mounts, CLI usage, and the GitHub repository link.
+```bash
+npm test            # Run all tests (63 tests, all with mock LLM)
+npm run test:watch  # Watch mode
+```
 
-### Deployment Architecture
+All tests use mock LLM — no network, no real API calls. CI runs on every push.
 
-The project is deployed on **Render** (free tier) as a Node.js web service:
+## Architecture
 
-- **Platform:** Render Web Service (US Oregon region)
-- **Instance:** Free tier (512MB RAM, 0.1 CPU) — spins down after 15 min inactivity, wakes on first request
-- **CI/CD:** GitHub Actions runs `npm test` + `npx tsc --noEmit` on every push, then builds Docker image
-- **WebUI:** Express server serving static files from `public/`, API endpoints under `/api/`
-- **Config storage:** Browser localStorage — no server-side persistence, each user's config is private
-- **Deployed URL:** https://code-harness.onrender.com
+**6 components + 1 loop:**
 
-### Deploy to Render
+```
+AgentLoop.run():
+  buildContext → LLMProvider.call → ActionParser.parse
+  → Guardrail.check → ToolExecutor.execute
+  → Verifier.verify → (FeedbackInjector.inject | done)
+```
 
-The project is deployed at: **https://code-harness.onrender.com**
+**Key design decisions:**
+- **Feedback loop** is the deep dimension (Verifier + FeedbackInjector + adaptive retry)
+- **Defense-in-depth workspace isolation**: System prompt → Guardrail (path normalization) → ToolExecutor (hard-coded path sandbox)
+- All mechanisms testable with mock LLM; removal of real LLM still leaves verifiable engineering
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://dashboard.render.com/)
+## Deployment
+
+**Cloud:** Deployed on Render free tier at https://code-harness.onrender.com
+- Spins down after 15 min inactivity, wakes on first request
+- Cloud mode: upload zip → isolated workspace → agent operates → download results
+- Workspace isolation enforced by 3-layer defense (prompt + guardrail + executor)
+
+**CI/CD:** GitHub Actions runs `npm test` + `tsc --noEmit` on every push, then builds Docker image.
 
 ## Known Limitations
 
-- Windows: keytar requires the `keytar` native module — if installation fails, use `HARNESS_API_KEY` env var
-- Only OpenAI-compatible APIs supported currently
-- Verifier regex patterns optimized for Jest/Vitest output; other test frameworks may not be classified correctly
+- Windows: `keytar` requires native module — if installation fails, use `HARNESS_API_KEY` env var
+- Only OpenAI-compatible APIs supported
+- Verifier regex patterns optimized for Vitest; other frameworks may not be classified correctly
 
 ## License
 

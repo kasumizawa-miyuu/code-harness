@@ -172,3 +172,31 @@ Due to the workflow sequence (branches merged locally before pushing to GitHub),
 - `docs/superpowers/specs/2026-07-24-cloud-workspace-design.md` — 新建设计文档
 - `SPEC.md` — 新增 §3.10 云端工作区
 - `PLAN.md` — 新增 Task 18-20
+
+## 2026-07-27
+
+### 22: Bug Fixes — 3 个云端部署后持久 Bug
+
+**Bug 1: 第二次运行任务卡死**
+- **根因**: `runTask()` 中 `body.innerHTML = ''` 删除了 `#emptyState` DOM 元素，第二次点击运行时 `document.getElementById('emptyState')` 返回 null，`empty.style.display = 'none'` 报错
+- **修复**: 改为选择性清除子元素（保留 `#emptyState`），加 `if (empty)` 空值检查
+- **文件**: `public/index.html`
+- **Commit**: `b1e866a`
+
+**Bug 2: 历史记录切换报错**
+- **根因**: 同 Bug 1，`restoreHistory()` 中 `body.innerHTML = ''` 删除 `#emptyState`，点击历史记录时 `empty.style.display` 报错
+- **修复**: 同样改为选择性清除 + 空值检查
+- **文件**: `public/index.html`
+- **Commit**: `59654aa`
+
+**Bug 3: 模型未真正切换到工作目录，可访问服务器文件**
+- **根因**: `ToolExecutor.ts` 中 `execAsync` 没有传 `cwd` 选项，命令在进程 CWD 下运行而非 workspace 目录；`Guardrail.ts` 路径检查未归一化，`startsWith` 可被 `../` 绕过
+- **修复**: 防御纵深方案——① `execAsync` 加 `cwd: config.workDir` ② `ToolExecutor.ts` 新增 `isPathAllowed()` 硬编码路径检查 ③ `Guardrail.ts` 路径先 `resolve()` 再检查 ④ `AgentLoop.ts` 增强系统提示词
+- **文件**: `ToolExecutor.ts`, `Guardrail.ts`, `AgentLoop.ts`
+- **测试**: 新增 7 个测试（路径遍历 + 硬编码沙箱）
+- **Commit**: `5c40d89`
+
+**Docs updated:**
+- `SPEC.md` — 更新日期和 workspace isolation 描述
+- `PLAN.md` — 标记 Tasks 18-20 完成
+- `AGENT_LOG.md` — 本次记录

@@ -2340,7 +2340,7 @@ git commit -m "docs: add README and update SPEC (subagent: primary)"
 **Overview:**
 WorkspaceManager handles the lifecycle of uploaded workspaces: session creation, zip extraction, file tree scanning, zip download, and cleanup. This enables safe cloud deployment where users can upload their project files to a temporary workspace.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```typescript
 // tests/unit/WorkspaceManager.test.ts
@@ -2437,12 +2437,12 @@ describe('WorkspaceManager', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/unit/WorkspaceManager.test.ts -v`
 Expected: FAIL — "Cannot find module '../../src/WorkspaceManager.js'"
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```typescript
 // src/WorkspaceManager.ts
@@ -2599,17 +2599,17 @@ export function createWorkspaceManager(options: { baseDir?: string } = {}): Work
 }
 ```
 
-- [ ] **Step 4: Install adm-zip dependency**
+- [x] **Step 4: Install adm-zip dependency**
 
 Run: `npm install adm-zip`
 Also install types: `npm install -D @types/adm-zip`
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npx vitest run tests/unit/WorkspaceManager.test.ts -v`
 Expected: PASS — all 6 tests pass
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```
 git add src/WorkspaceManager.ts tests/unit/WorkspaceManager.test.ts package.json
@@ -2627,7 +2627,7 @@ git commit -m "feat: add WorkspaceManager with zip upload, file tree, download, 
 **Overview:**
 Integrate WorkspaceManager into the Express server. Add cloud environment detection, three new API endpoints, and a cloud-mode guard that rejects task execution until a workspace is uploaded. Update the frontend with upload/download UI.
 
-- [ ] **Step 1: Write the failing test (integration)**
+- [x] **Step 1: Write the failing test (integration)**
 
 ```typescript
 // tests/integration/CloudWorkspace.test.ts
@@ -2635,7 +2635,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 // Integration test for server endpoints
 ```
 
-- [ ] **Step 2: Update server.ts**
+- [x] **Step 2: Update server.ts**
 
 Add to server.ts:
 1. Environment detection function (`isCloudEnvironment()`)
@@ -2645,7 +2645,7 @@ Add to server.ts:
 5. `GET /api/workspace/status` — returns workspace info
 6. Cloud mode guard in `/api/run` — reject if no workspace uploaded
 
-- [ ] **Step 3: Update public/index.html**
+- [x] **Step 3: Update public/index.html**
 
 Add to the frontend:
 1. Cloud mode detection → show upload overlay
@@ -2655,9 +2655,9 @@ Add to the frontend:
 5. "Download workspace" button
 6. "Switch workspace" button
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add src/server.ts public/index.html
@@ -2674,11 +2674,11 @@ git commit -m "feat: integrate cloud workspace with upload/download/status endpo
 - Modify: `SPEC_PROCESS.md` — add this brainstorming session
 - New: `docs/superpowers/specs/2026-07-24-cloud-workspace-design.md` — already created
 
-- [ ] **Step 1: Update AGENT_LOG.md**
+- [x] **Step 1: Update AGENT_LOG.md**
 
-- [ ] **Step 2: Update SPEC_PROCESS.md**
+- [x] **Step 2: Update SPEC_PROCESS.md**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```
 git add AGENT_LOG.md SPEC_PROCESS.md SPEC.md

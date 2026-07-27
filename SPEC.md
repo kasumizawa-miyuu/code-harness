@@ -2,7 +2,7 @@
 
 > 项目：AI4SE 期末项目 · A · Coding Agent Harness
 > 日期：2026-07-13
-> 最后更新：2026-07-24 — 新增云端工作区（§3.10）
+> 最后更新：2026-07-27 — 新增云端工作区（§3.10）+ 防御纵深工作区隔离（§3.5 ToolExecutor 硬编码沙箱 + §3.5 Guardrail 路径归一化）
 > 状态：设计定稿
 
 ---
@@ -74,7 +74,7 @@ LLM 在编码场景中会产生不可靠的输出：生成的代码可能有编�
 | 项目 | 说明 |
 |------|------|
 | 输入 | Action |
-| 行为 | 根据 type 执行对应操作：读文件、写文件、patch 文件、执行 shell 命令 |
+| 行为 | 根据 type 执行对应操作：读文件、写文件、patch 文件、执行 shell 命令。所有文件操作和命令执行前经过 `isPathAllowed()` 硬编码路径检查，确保路径在 `allowedPaths` 范围内。`execAsync` 设置 `cwd: config.workDir` 让命令在工作目录下执行。 |
 | 输出 | `ActionResult { success: boolean, stdout: string, stderr: string, exitCode: number }` |
 | 边界条件 | 文件不存在 → 返回错误信息；命令超时（默认 30s）→ kill 进程并返回超时 |
 | 错误处理 | 执行失败不抛异常，而是将错误信息放在 ActionResult 中返回 |
@@ -84,7 +84,7 @@ LLM 在编码场景中会产生不可靠的输出：生成的代码可能有编�
 | 项目 | 说明 |
 |------|------|
 | 输入 | Action |
-| 行为 | 检查 action 是否在允许范围内：黑名单命令（`rm -rf /` 等）、白名单路径（只允许 `workDir` 下的操作） |
+| 行为 | 检查 action 是否在允许范围内：黑名单命令（`rm -rf /` 等）、白名单路径（只允许 `workDir` 下的操作，路径先 `resolve()` 归一化防止 `../` 绕过） |
 | 输出 | `GuardResult { allowed: boolean, reason?: string }` |
 | 边界条件 | 危险命令 → 拦截并返回 blocked 信息；路径越界 → 拦截并报告 |
 | 错误处理 | Guardrail 本身不抛异常，始终返回明确的 allow/deny |
