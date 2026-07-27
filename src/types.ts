@@ -115,4 +115,5 @@ export interface AgentLoopResult {
   status: 'completed' | 'failed_after_retries' | 'repeated_error' | 'direction_error' | 'llm_error' | 'parse_error'
   exchanges: Exchange[]
   lastResult?: ActionResult
+  blocks: string[]
 }

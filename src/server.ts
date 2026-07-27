@@ -78,11 +78,15 @@ app.post('/api/run', async (req, res) => {
       ? result.exchanges.map(e => `[${e.role}] ${e.content}`).join('\n---\n')
       : ''
 
+    const blockWarnings = result.blocks && result.blocks.length > 0
+      ? result.blocks.join('\n') + '\n\n'
+      : ''
+
     res.json({
       success: result.success,
       status: result.status,
       retries: result.retries,
-      output: result.lastResult?.stdout || result.lastResult?.stderr || '',
+      output: blockWarnings + (result.lastResult?.stdout || result.lastResult?.stderr || ''),
       exchanges: exchangeLog,
     })
   } catch (err: any) {

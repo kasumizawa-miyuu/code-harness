@@ -7,14 +7,16 @@ import { createFeedbackInjector } from './FeedbackInjector.js'
 import { createLogger } from './Logger.js'
 import { createMockLLMProvider } from './MockLLMProvider.js'
 
-const SYSTEM_PROMPT = `You are a coding assistant. You can perform actions by outputting one of:
-- read_file path="<filepath>"
-- write_file path="<filepath>" content="<content>"
-- patch_file path="<filepath>" content="<content>"
+const SYSTEM_PROMPT = `You are a coding assistant running in a SANDBOXED environment. Output ONLY actions — no explanations, questions, or commentary.
+
+Available actions:
+- read_file path="<absolute_path>"
+- write_file path="<absolute_path>" content="<content>"
+- patch_file path="<absolute_path>" content="<content>"
 - run_command command="<command>"
 - run_test test="<test command>"
 
-Output ONE action per response. After receiving feedback, adjust your approach.`
+Output exactly ONE action per response. Nothing else.`
 
 function summariesEqual(a: string, b: string): boolean {
   return a.trim() === b.trim()
@@ -32,7 +34,7 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
   const workDir = config.workDir || process.cwd()
 
   // Build system prompt with workspace info
-  const systemPrompt = `${SYSTEM_PROMPT}\n\nYour workspace directory is: ${workDir}\nAll file paths must be absolute paths within this workspace.\nAll commands run in this workspace directory.\nUse read_file/write_file/patch_file for file operations, NOT run_command.\nYou CANNOT access any files outside this workspace. Paths outside the workspace will be blocked.`
+  const systemPrompt = `${SYSTEM_PROMPT}\n\nSANDBOX ROOT: ${workDir}\n- All file paths MUST be absolute and within this directory.\n- Commands execute in this directory.\n- Accessing ANY path outside this directory is BLOCKED. Do not attempt it.`
 
   return {
     setMockResponses(responses: string[]) {
@@ -54,6 +56,7 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
       let sameCategoryCount = 0
       let lastCategory: string | null = null
       let lastResult: ActionResult | null = null
+      const blocks: string[] = []
 
       while (true) {
         logger.info('Thinking...')
@@ -63,7 +66,7 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
           response = await provider.call(context)
         } catch (err: any) {
           logger.error(`LLM error: ${err.message}`)
-          return { success: false, retries: context.retryCount, status: 'llm_error', exchanges: context.history }
+          return { success: false, retries: context.retryCount, status: 'llm_error', exchanges: context.history, blocks }
         }
 
         if (!response.content) {
@@ -82,7 +85,7 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
           )
           context = feedback
           if (context.retryCount >= config.maxRetries) {
-            return { success: false, retries: context.retryCount, status: 'parse_error', exchanges: context.history }
+            return { success: false, retries: context.retryCount, status: 'parse_error', exchanges: context.history, blocks }
           }
           continue
         }
@@ -92,13 +95,14 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
         const guardResult = await guardrail.check(action)
         if (!guardResult.allowed) {
           logger.warn(`Guardrail blocked: ${(guardResult as any).reason}`)
+          blocks.push(`[BLOCKED] ${(guardResult as any).reason}`)
           const feedback = injector.inject(
             { passed: false, category: 'test_fail', severity: 'error', details: (guardResult as any).reason, summary: `Action blocked: ${(guardResult as any).reason}` },
             context,
           )
           context = feedback
           if (context.retryCount >= config.maxRetries) {
-            return { success: false, retries: context.retryCount, status: 'failed_after_retries', exchanges: context.history }
+            return { success: false, retries: context.retryCount, status: 'failed_after_retries', exchanges: context.history, blocks }
           }
           continue
         }
@@ -112,7 +116,7 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
 
         if (!verification.passed) {
           if (lastSummary !== null && summariesEqual(verification.summary, lastSummary)) {
-            return { success: false, retries: context.retryCount, status: 'repeated_error', exchanges: context.history }
+            return { success: false, retries: context.retryCount, status: 'repeated_error', exchanges: context.history, blocks }
           }
 
           if (lastCategory === verification.category) {
@@ -123,13 +127,13 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
           lastCategory = verification.category
 
           if (sameCategoryCount >= 3) {
-            return { success: false, retries: context.retryCount, status: 'direction_error', exchanges: context.history }
+            return { success: false, retries: context.retryCount, status: 'direction_error', exchanges: context.history, blocks }
           }
 
           lastSummary = verification.summary
 
           if (verification.severity === 'fatal' && context.retryCount >= config.maxRetries) {
-            return { success: false, retries: context.retryCount, status: 'failed_after_retries', exchanges: context.history }
+            return { success: false, retries: context.retryCount, status: 'failed_after_retries', exchanges: context.history, blocks }
           }
 
           context = injector.inject(verification, context)
@@ -138,10 +142,10 @@ export function createAgentLoop(config: Config, llmProvider?: ILLMProvider) {
         }
 
         logger.info('Task completed successfully')
-        return { success: true, retries: context.retryCount, status: 'completed', exchanges: context.history, lastResult: lastResult || undefined }
+        return { success: true, retries: context.retryCount, status: 'completed', exchanges: context.history, lastResult: lastResult || undefined, blocks }
       }
 
-      return { success: true, retries: context.retryCount, status: 'completed', exchanges: context.history, lastResult: lastResult || undefined }
+      return { success: true, retries: context.retryCount, status: 'completed', exchanges: context.history, lastResult: lastResult || undefined, blocks }
     },
   }
 }
