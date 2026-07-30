@@ -22,6 +22,7 @@ harness configure
 harness key update
 
 # Run a task
+cd your/work/place
 harness run "fix the failing test"
 ```
 
@@ -32,7 +33,9 @@ docker build -t code-harness .
 docker run -v $(pwd):/workspace -w /workspace -p 3000:3000 code-harness
 ```
 
-Open http://localhost:3000. The `-v $(pwd):/workspace` mount gives the WebUI access to your current directory's files.
+Open http://localhost:3000. 
+
+The `-v $(pwd):/workspace` mount gives the WebUI access to your current directory's files.
 
 ### Option 3: Deployed WebUI
 
@@ -155,6 +158,7 @@ AgentLoop.run():
 - Windows: `keytar` requires native module — if installation fails, use `HARNESS_API_KEY` env var
 - Only OpenAI-compatible APIs supported
 - Verifier regex patterns optimized for Vitest; other frameworks may not be classified correctly
+- **Scope:** code-harness is a code execution and modification tool — it reads, writes, and runs code. It is not a chat or code explanation tool. Asking it to "explain what this code does" will not produce useful results; use it for concrete coding tasks like "fix this bug" or "add a feature"
 
 ## License
 

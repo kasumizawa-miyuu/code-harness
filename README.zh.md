@@ -22,7 +22,8 @@ harness configure
 harness key update
 
 # 运行任务
-harness run "修复失败的测试"
+cd your/work/place
+harness run "fix the failing test"
 ```
 
 ### 方式 2：Docker（WebUI + 本地文件访问）
@@ -32,7 +33,9 @@ docker build -t code-harness .
 docker run -v $(pwd):/workspace -w /workspace -p 3000:3000 code-harness
 ```
 
-打开 http://localhost:3000。`-v $(pwd):/workspace` 挂载将当前目录映射到容器内供 Agent 访问。
+打开 http://localhost:3000
+
+`-v $(pwd):/workspace` 挂载将当前目录映射到容器内供 Agent 访问。
 
 ### 方式 3：云端 WebUI
 
@@ -155,6 +158,7 @@ AgentLoop.run():
 - Windows：`keytar` 需要原生模块——如果安装失败，请使用 `HARNESS_API_KEY` 环境变量
 - 仅支持 OpenAI 兼容 API
 - Verifier 正则表达式针对 Vitest 优化；其他测试框架可能无法正确分类
+- **边界说明：** code-harness 是一个代码执行与修改工具——它读文件、写文件、运行命令。它不是一个聊天或代码解释工具。要求它"解释这段代码在做什么"不会产生有用结果；请用它执行具体的编码任务，如"修复这个 bug"或"添加一个功能"
 
 ## 许可证
 
