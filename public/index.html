@@ -1060,6 +1060,16 @@ const CONFIG_KEY = 'code-harness-config'
 const API_KEY_KEY = 'code-harness-api-key'
 const HISTORY_KEY = 'code-harness-history'
 const THEME_KEY = 'code-harness-theme'
+const CLIENT_ID_KEY = 'code-harness-client-id'
+
+function getClientId() {
+  let id = localStorage.getItem(CLIENT_ID_KEY)
+  if (!id) {
+    id = 'cli-' + crypto.randomUUID()
+    localStorage.setItem(CLIENT_ID_KEY, id)
+  }
+  return id
+}
 
 function getStoredConfig() {
   try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {} } catch { return {} }
@@ -1089,8 +1099,9 @@ async function api(url, opts = {}, timeoutMs = 120000) {
       reject(new Error('Request timeout'))
     }, timeoutMs)
     fetch(url, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-client-id': getClientId() },
       ...opts,
+      headers: { ...{ 'Content-Type': 'application/json', 'x-client-id': getClientId() }, ...(opts.headers || {}) },
     })
     .then(res => {
       clearTimeout(timer)

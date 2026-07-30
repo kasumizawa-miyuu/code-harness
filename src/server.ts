@@ -31,7 +31,11 @@ function isCloudEnvironment(): boolean {
 
 const cloudMode = isCloudEnvironment()
 const wsManager = createWorkspaceManager()
-let currentSessionId: string | null = null
+const clientSessions = new Map<string, string>()
+
+function getClientId(req: express.Request): string {
+  return (req.headers['x-client-id'] as string) || 'default'
+}
 
 app.post('/api/run', async (req, res) => {
   try {
@@ -40,7 +44,10 @@ app.post('/api/run', async (req, res) => {
       return res.status(400).json({ error: 'Missing task description' })
     }
 
-    if (cloudMode && !currentSessionId) {
+    const clientId = getClientId(req)
+    const sessionId = clientSessions.get(clientId)
+
+    if (cloudMode && !sessionId) {
       return res.json({ status: 'no_workspace', message: '请先上传工作区（zip 文件）后再运行任务' })
     }
 
@@ -63,8 +70,8 @@ app.post('/api/run', async (req, res) => {
       return res.json({ status: 'no_key', message: 'No API Key configured. Enter your API key in the sidebar.' })
     }
 
-    if (cloudMode && currentSessionId) {
-      const session = wsManager.getSession(currentSessionId)
+    if (cloudMode && sessionId) {
+      const session = wsManager.getSession(sessionId)
       if (session) {
         config.workDir = session.rootDir
         config.allowedPaths = [session.rootDir]
@@ -94,9 +101,11 @@ app.post('/api/run', async (req, res) => {
   }
 })
 
-app.get('/api/cwd', (_req, res) => {
-  const cwd = (cloudMode && currentSessionId)
-    ? (wsManager.getSession(currentSessionId)?.rootDir || process.cwd())
+app.get('/api/cwd', (req, res) => {
+  const clientId = getClientId(req)
+  const sessionId = clientSessions.get(clientId)
+  const cwd = (cloudMode && sessionId)
+    ? (wsManager.getSession(sessionId)?.rootDir || process.cwd())
     : process.cwd()
   res.json({ cwd, homedir: homedir() })
 })
@@ -114,9 +123,10 @@ app.post('/api/workspace/upload', async (req, res) => {
       return res.status(413).json({ error: 'Zip file exceeds 100MB limit' })
     }
 
-    if (currentSessionId) {
-      wsManager.cleanup(currentSessionId)
-      currentSessionId = null
+    const clientId = getClientId(req)
+    const oldSessionId = clientSessions.get(clientId)
+    if (oldSessionId) {
+      wsManager.cleanup(oldSessionId)
     }
 
     const session = wsManager.createSession()
@@ -125,7 +135,7 @@ app.post('/api/workspace/upload', async (req, res) => {
     }
     const files = await wsManager.uploadZip(session.sessionId, buffer)
     const fileTree = wsManager.getFileTree(session.sessionId)
-    currentSessionId = session.sessionId
+    clientSessions.set(clientId, session.sessionId)
 
     res.json({
       sessionId: session.sessionId,
@@ -139,8 +149,10 @@ app.post('/api/workspace/upload', async (req, res) => {
   }
 })
 
-app.get('/api/workspace/status', (_req, res) => {
-  const session = currentSessionId ? wsManager.getSession(currentSessionId) : undefined
+app.get('/api/workspace/status', (req, res) => {
+  const clientId = getClientId(req)
+  const sessionId = clientSessions.get(clientId)
+  const session = sessionId ? wsManager.getSession(sessionId) : undefined
   res.json({
     hasWorkspace: !!session,
     cloudMode,
@@ -152,12 +164,14 @@ app.get('/api/workspace/status', (_req, res) => {
   })
 })
 
-app.get('/api/workspace/download', async (_req, res) => {
+app.get('/api/workspace/download', async (req, res) => {
   try {
-    if (!currentSessionId) {
+    const clientId = getClientId(req)
+    const sessionId = clientSessions.get(clientId)
+    if (!sessionId) {
       return res.status(400).json({ error: 'No active workspace' })
     }
-    const buffer = await wsManager.downloadZip(currentSessionId)
+    const buffer = await wsManager.downloadZip(sessionId)
     res.set('Content-Type', 'application/zip')
     res.set('Content-Disposition', 'attachment; filename="workspace.zip"')
     res.send(buffer)
@@ -166,10 +180,12 @@ app.get('/api/workspace/download', async (_req, res) => {
   }
 })
 
-app.post('/api/workspace/cleanup', (_req, res) => {
-  if (currentSessionId) {
-    wsManager.cleanup(currentSessionId)
-    currentSessionId = null
+app.post('/api/workspace/cleanup', (req, res) => {
+  const clientId = getClientId(req)
+  const sessionId = clientSessions.get(clientId)
+  if (sessionId) {
+    wsManager.cleanup(sessionId)
+    clientSessions.delete(clientId)
   }
   res.json({ success: true })
 })
