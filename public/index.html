@@ -167,7 +167,7 @@
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
       transition: width var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard);
     }
     .sidebar.collapsed {
@@ -919,8 +919,8 @@ harness run "your task"</div>
     <span>code-harness</span>
   </div>
   <div class="topnav-actions">
-    <button class="btn-icon" onclick="toggleTheme()" title="切换主题">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    <button class="btn-icon" onclick="toggleTheme()" title="切换主题" id="themeBtn">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
     </button>
     <button class="btn btn-secondary btn-sm" onclick="openGuide()">用户指南</button>
   </div>
@@ -1266,7 +1266,7 @@ function toggleTheme() {
   const root = document.documentElement
   const current = root.getAttribute('data-theme')
   if (current === 'dark') {
-    root.removeAttribute('data-theme')
+    root.setAttribute('data-theme', 'light')
     localStorage.setItem(THEME_KEY, 'light')
   } else {
     root.setAttribute('data-theme', 'dark')
@@ -1281,14 +1281,25 @@ function applyTheme() {
   if (stored === 'dark') {
     root.setAttribute('data-theme', 'dark')
   } else if (stored === 'light') {
-    root.removeAttribute('data-theme')
+    root.setAttribute('data-theme', 'light')
   } else {
-    // follow system
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
       root.setAttribute('data-theme', 'dark')
     } else {
-      root.removeAttribute('data-theme')
+      root.setAttribute('data-theme', 'light')
     }
+  }
+  updateThemeIcon()
+}
+
+function updateThemeIcon() {
+  const icon = document.getElementById('themeIcon')
+  if (!icon) return
+  const theme = document.documentElement.getAttribute('data-theme')
+  if (theme === 'dark') {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>'
+  } else {
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'
   }
 }
 
