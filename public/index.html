@@ -178,13 +178,23 @@
       border-bottom: 1px solid var(--border);
       padding: 16px 16px 12px;
     }
-    .sidebar-panel:last-of-type { border-bottom: none; flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .sidebar-panel:last-of-type { border-bottom: none; }
     .sidebar-panel-title {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 12px;
+      cursor: pointer;
+      user-select: none;
     }
+    .sidebar-panel-title:hover { opacity: 0.8; }
+    .sidebar-panel.collapsed > :not(.sidebar-panel-title) { display: none; }
+    .sidebar-panel.collapsed .sidebar-panel-title { margin-bottom: 0; }
+    .sidebar-panel-chevron {
+      width: 14px; height: 14px;
+      transition: transform var(--motion-base) var(--ease-standard);
+    }
+    .sidebar-panel.collapsed .sidebar-panel-chevron { transform: rotate(-90deg); }
     .sidebar-panel-title h3 {
       font-size: 11px;
       font-weight: 400;
@@ -931,8 +941,9 @@ harness run "your task"</div>
   <aside class="sidebar" data-od-id="sidebar">
 
     <div class="sidebar-panel">
-      <div class="sidebar-panel-title">
+      <div class="sidebar-panel-title" onclick="this.parentElement.classList.toggle('collapsed')">
         <h3>LLM 配置</h3>
+        <svg class="sidebar-panel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="field">
         <label for="llmProvider">Provider</label>
@@ -969,8 +980,9 @@ harness run "your task"</div>
     </div>
 
     <div class="sidebar-panel">
-      <div class="sidebar-panel-title">
+      <div class="sidebar-panel-title" onclick="this.parentElement.classList.toggle('collapsed')">
         <h3>API Key</h3>
+        <svg class="sidebar-panel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="status-indicator">
         <span class="status-dot" id="keyDot"></span>
@@ -981,8 +993,9 @@ harness run "your task"</div>
     </div>
 
     <div class="sidebar-panel">
-      <div class="sidebar-panel-title">
+      <div class="sidebar-panel-title" onclick="this.parentElement.classList.toggle('collapsed')">
         <h3>工作目录</h3>
+        <svg class="sidebar-panel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="cwd-display" id="cwdDisplay">加载中...</div>
       <div id="wsSidebarActions" style="display:none;margin-top:8px;display:flex;flex-direction:column;gap:6px;">
